@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
+
+class RedirectIfAuthenticated
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
+    public function handle(Request $request, Closure $next, string ...$guards): Response
+    {
+        $guards = empty($guards) ? [null] : $guards;
+
+        foreach ($guards as $guard) {
+            if (Auth::guard($guard)->check()) {
+                $user = Auth::guard($guard)->user();
+                
+                // Check if user is active and has proper role
+                if ($user->is_active && ($user->isAdmin() || $user->isStaff())) {
+                    return redirect()->route('admin.dashboard')->with('info', 'You are already logged in.');
+                } else {
+                    // If user is inactive or doesn't have proper role, logout
+                    Auth::guard($guard)->logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                }
+            }
+        }
+
+        return $next($request);
+    }
+}
