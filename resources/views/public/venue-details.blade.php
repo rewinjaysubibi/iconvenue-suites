@@ -61,17 +61,22 @@
 
         <!-- Venue Details -->
         <div class="p-8">
-            <p class="text-gray-600 mb-8 text-lg leading-relaxed">{{ $venue->description }}</p>
+            <p class="text-gray-500 mb-8 text-lg leading-loose tracking-wide font-light italic border-l-4 border-purple-300 pl-5">{{ $venue->description }}</p>
 
             <!-- Amenities Section -->
             @if($venue->amenities && count($venue->amenities) > 0)
             <div class="mb-8">
                 <h3 class="text-2xl font-bold mb-4 text-gray-800">Amenities</h3>
-                <div class="grid md:grid-cols-3 gap-4">
-                    @foreach($venue->amenities as $amenity)
-                    <div class="flex items-center">
-                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                        <span class="text-gray-700">{{ $amenity }}</span>
+                @php
+                    $amenities = is_array($venue->amenities)
+                        ? $venue->amenities
+                        : array_filter(array_map('trim', explode("\n", $venue->amenities)));
+                @endphp
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
+                    @foreach($amenities as $amenity)
+                    <div class="flex items-start gap-2 py-2 border-b border-gray-100">
+                        <i class="fas fa-check text-purple-500 mt-0.5 flex-shrink-0 text-xs"></i>
+                        <span class="text-gray-700 text-sm">{{ trim($amenity) }}</span>
                     </div>
                     @endforeach
                 </div>

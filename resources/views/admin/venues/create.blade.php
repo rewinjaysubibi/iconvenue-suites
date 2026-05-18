@@ -29,9 +29,10 @@
 
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Price per Day *</label>
-                <input type="number" name="price_per_day" id="price_per_day" value="{{ old('price_per_day') }}" required min="0" step="0.01" readonly
-                    class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600 focus:outline-none">
-                <p class="text-xs text-gray-500 mt-1">Automatically calculated from time-based pricing</p>
+                <input type="number" name="price_per_day" id="price_per_day" value="{{ old('price_per_day') }}" required min="0" step="0.01"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                    placeholder="Enter total price or fill time slots below">
+                <p class="text-xs text-gray-500 mt-1">Enter a total price to auto-split into time slots, or fill the time slots manually below.</p>
             </div>
         </div>
 
@@ -41,7 +42,7 @@
                     <i class="fas fa-clock mr-2"></i>Time-Based Pricing (Optional)
                 </h3>
                 <p class="text-purple-700">
-                    Set different prices for specific time slots. If not set, the daily rate will be used for all bookings.
+                    Set different prices for specific time slots, or enter a total price above to auto-divide equally across all 3 slots.
                 </p>
             </div>
             
@@ -126,23 +127,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const priceAfternoon = document.getElementById('price_afternoon');
     const priceEvening = document.getElementById('price_evening');
     const pricePerDay = document.getElementById('price_per_day');
-    
+
+    // When time slots change → update total
     function calculateTotalPrice() {
         const morning = parseFloat(priceMorning.value) || 0;
         const afternoon = parseFloat(priceAfternoon.value) || 0;
         const evening = parseFloat(priceEvening.value) || 0;
-        
-        const total = morning + afternoon + evening;
-        pricePerDay.value = total.toFixed(2);
+        pricePerDay.value = (morning + afternoon + evening).toFixed(2);
     }
-    
-    // Calculate on page load
-    calculateTotalPrice();
-    
-    // Add event listeners to time-based pricing fields
+
+    // When price per day is typed → divide equally into 3 slots
+    function distributeToSlots() {
+        const total = parseFloat(pricePerDay.value) || 0;
+        if (total > 0) {
+            const perSlot = (total / 3).toFixed(2);
+            priceMorning.value = perSlot;
+            priceAfternoon.value = perSlot;
+            priceEvening.value = perSlot;
+        }
+    }
+
+    pricePerDay.addEventListener('input', distributeToSlots);
     priceMorning.addEventListener('input', calculateTotalPrice);
     priceAfternoon.addEventListener('input', calculateTotalPrice);
     priceEvening.addEventListener('input', calculateTotalPrice);
+
+    // Calculate on page load
+    calculateTotalPrice();
 });
 
 function previewVenueImages(event) {

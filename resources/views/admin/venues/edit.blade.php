@@ -33,10 +33,8 @@
                 <label class="block text-gray-700 font-semibold mb-2">Price per Day *</label>
                 <input type="number" name="price_per_day" id="price_per_day" value="{{ old('price_per_day', $venue->price_per_day) }}" required min="0" step="0.01"
                     class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    {{ $venue->type == 'venue' ? 'readonly' : '' }}>
-                @if($venue->type == 'venue')
-                <p class="text-xs text-gray-500 mt-1">Automatically calculated from time-based pricing</p>
-                @endif
+                    placeholder="Enter total price or fill time slots below">
+                <p class="text-xs text-gray-500 mt-1" id="pricePerDayNote">Enter a total price to auto-split into time slots, or fill the time slots manually below.</p>
             </div>
         </div>
 
@@ -142,44 +140,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const morning = parseFloat(priceMorning.value) || 0;
             const afternoon = parseFloat(priceAfternoon.value) || 0;
             const evening = parseFloat(priceEvening.value) || 0;
-            
-            const total = morning + afternoon + evening;
-            pricePerDay.value = total.toFixed(2);
+            pricePerDay.value = (morning + afternoon + evening).toFixed(2);
+        }
+    }
+
+    function distributeToSlots() {
+        if (typeSelect.value === 'venue') {
+            const total = parseFloat(pricePerDay.value) || 0;
+            if (total > 0) {
+                const perSlot = (total / 3).toFixed(2);
+                priceMorning.value = perSlot;
+                priceAfternoon.value = perSlot;
+                priceEvening.value = perSlot;
+            }
         }
     }
     
     function updateFormBasedOnType() {
         if (typeSelect.value === 'suite') {
             nameLabel.textContent = 'Suite Name *';
-            // Hide time-based pricing for suites
             timePricingFields.style.display = 'none';
             timePricingNote.textContent = 'Suites use standard 22-hour booking (Check-in: 2PM, Check-out: 12PM next day)';
-            // Clear time pricing values for suites
             document.querySelectorAll('#timePricingFields input').forEach(input => input.value = '');
-            // Make price_per_day editable for suites
             pricePerDay.readOnly = false;
             pricePerDay.classList.remove('bg-gray-100', 'text-gray-600');
-            pricePerDay.classList.add('focus:ring-2', 'focus:ring-purple-600');
-            // Hide auto-calculation note
-            const note = pricePerDay.nextElementSibling;
-            if (note && note.tagName === 'P') {
-                note.style.display = 'none';
-            }
         } else {
             nameLabel.textContent = 'Venue Name *';
-            // Show time-based pricing for venues
             timePricingFields.style.display = 'grid';
-            timePricingNote.textContent = 'For venues only. Suites use standard 22-hour booking (Check-in: 2PM, Check-out: 12PM)';
-            // Make price_per_day readonly for venues
-            pricePerDay.readOnly = true;
-            pricePerDay.classList.add('bg-gray-100', 'text-gray-600');
-            pricePerDay.classList.remove('focus:ring-2', 'focus:ring-purple-600');
-            // Show auto-calculation note
-            const note = pricePerDay.nextElementSibling;
-            if (note && note.tagName === 'P') {
-                note.style.display = 'block';
-            }
-            // Calculate total price
+            timePricingNote.textContent = 'Enter a total price above to auto-split into time slots, or fill the time slots manually.';
+            pricePerDay.readOnly = false;
+            pricePerDay.classList.remove('bg-gray-100', 'text-gray-600');
             calculateTotalPrice();
         }
     }
@@ -191,6 +181,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (priceMorning) priceMorning.addEventListener('input', calculateTotalPrice);
     if (priceAfternoon) priceAfternoon.addEventListener('input', calculateTotalPrice);
     if (priceEvening) priceEvening.addEventListener('input', calculateTotalPrice);
+
+    // Distribute total price to slots when price_per_day is typed
+    if (pricePerDay) pricePerDay.addEventListener('input', distributeToSlots);
     
     // Calculate on page load if it's a venue
     if (typeSelect.value === 'venue') {

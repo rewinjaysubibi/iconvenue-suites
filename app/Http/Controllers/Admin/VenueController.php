@@ -109,6 +109,12 @@ class VenueController extends Controller
         $validated['type'] = $type;
         $validated['is_active'] = $request->has('is_active') ? true : false;
 
+        // Split amenities textarea (one per line) into a clean array
+        if (!empty($validated['amenities'])) {
+            $raw = is_array($validated['amenities']) ? implode("\n", $validated['amenities']) : $validated['amenities'];
+            $validated['amenities'] = array_values(array_filter(array_map('trim', explode("\n", $raw))));
+        }
+
         Venue::create($validated);
 
         $routeName = $type === 'suite' ? 'admin.suites.index' : 'admin.venues.index';
@@ -156,6 +162,12 @@ class VenueController extends Controller
 
         $validated['images'] = $images;
         $validated['is_active'] = $request->has('is_active') ? true : false;
+
+        // Split amenities textarea (one per line) into a clean array
+        if (!empty($validated['amenities'])) {
+            $raw = is_array($validated['amenities']) ? implode("\n", $validated['amenities']) : $validated['amenities'];
+            $validated['amenities'] = array_values(array_filter(array_map('trim', explode("\n", $raw))));
+        }
 
         $venue->update($validated);
 
