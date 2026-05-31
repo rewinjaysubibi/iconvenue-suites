@@ -174,9 +174,22 @@ function renderCalendar() {
             const todayCls = d.is_today ? 'bg-blue-50' : d.is_past ? 'bg-gray-50' : '';
 
             if (bookings.length === 0) {
-                row += `<td class="px-1 py-1 border-b border-r text-center ${todayCls}">
-                    <span class="text-gray-300 text-xs">—</span>
-                </td>`;
+                const isPast = d.is_past;
+                if (!isPast) {
+                    row += `<td class="px-1 py-1 border-b border-r text-center ${todayCls} group cursor-pointer hover:bg-green-50 transition"
+                        onclick="openCreateBooking('${d.date}', ${venue.id}, '${venue.name.replace(/'/g, "\\'")}')">
+                        <span class="text-gray-200 group-hover:hidden text-xs">—</span>
+                        <span class="hidden group-hover:inline-flex items-center justify-center w-full">
+                            <span class="bg-green-500 text-white text-xs rounded px-1.5 py-0.5 font-semibold whitespace-nowrap">
+                                <i class="fas fa-plus text-xs mr-0.5"></i>Book
+                            </span>
+                        </span>
+                    </td>`;
+                } else {
+                    row += `<td class="px-1 py-1 border-b border-r text-center ${todayCls}">
+                        <span class="text-gray-300 text-xs">—</span>
+                    </td>`;
+                }
             } else {
                 let cells = bookings.map(b => {
                     const cls = statusColors[b.status] || 'bg-gray-300 text-gray-800';
@@ -296,6 +309,11 @@ document.getElementById('todayBtn').addEventListener('click', () => {
 document.getElementById('statusFilter').addEventListener('change', e => { statusFilter = e.target.value; if (calendarData) renderCalendar(); });
 document.getElementById('typeFilter').addEventListener('change', e => { typeFilter = e.target.value; if (calendarData) renderCalendar(); });
 document.getElementById('bookingModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+function openCreateBooking(date, venueId, venueName) {
+    const url = `{{ route('admin.bookings.create') }}?booking_date=${date}&venue_id=${venueId}`;
+    window.location.href = url;
+}
 
 loadCalendar();
 </script>

@@ -18,9 +18,13 @@
                 <i class="fas fa-chart-line mr-3 w-5"></i> 
                 <span class="font-medium">Dashboard</span>
             </a>
-            <a href="{{ route('admin.bookings.index') }}" class="flex items-center px-4 py-3 mb-2 rounded-lg hover:bg-gray-700 transition-all duration-200 {{ request()->routeIs('admin.bookings.index') || request()->routeIs('admin.bookings.show') || request()->routeIs('admin.bookings.create') || request()->routeIs('admin.bookings.edit') ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg' : '' }}">
+            <a href="{{ route('admin.bookings.index') }}" class="flex items-center px-4 py-3 mb-2 rounded-lg hover:bg-gray-700 transition-all duration-200 {{ request()->routeIs('admin.bookings.index') || request()->routeIs('admin.bookings.show') || request()->routeIs('admin.bookings.edit') ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg' : '' }}">
                 <i class="fas fa-calendar-check mr-3 w-5"></i>
                 <span class="font-medium">Bookings</span>
+            </a>
+            <a href="{{ route('admin.bookings.calendar') }}" class="flex items-center px-4 py-3 mb-2 rounded-lg hover:bg-gray-700 transition-all duration-200 {{ request()->routeIs('admin.bookings.calendar*') || request()->routeIs('admin.bookings.create') ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg' : '' }}">
+                <i class="fas fa-calendar-plus mr-3 w-5"></i>
+                <span class="font-medium">New Booking</span>
             </a>
             <a href="{{ route('admin.clients.index') }}" class="flex items-center px-4 py-3 mb-2 rounded-lg hover:bg-gray-700 transition-all duration-200 {{ request()->routeIs('admin.clients.*') ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg' : '' }}">
                 <i class="fas fa-users mr-3 w-5"></i>
@@ -59,7 +63,7 @@
                 <i class="fas fa-users mr-3 w-5"></i> 
                 <span class="font-medium">Staff</span>
             </a>
-            <a href="{{ route('admin.reports.index') }}" class="flex items-center px-4 py-3 mb-2 rounded-lg hover:bg-gray-700 transition-all duration-200 {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.bookings.calendar*') ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg' : '' }}">
+            <a href="{{ route('admin.reports.index') }}" class="flex items-center px-4 py-3 mb-2 rounded-lg hover:bg-gray-700 transition-all duration-200 {{ request()->routeIs('admin.reports.*') ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg' : '' }}">
                 <i class="fas fa-file-alt mr-3 w-5"></i> 
                 <span class="font-medium">Reports</span>
             </a>

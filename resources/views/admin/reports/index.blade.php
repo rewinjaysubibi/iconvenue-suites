@@ -3,17 +3,10 @@
 @section('page-title', 'Reports & Analytics')
 
 @section('main-content')
-<!-- Header with Calendar Button -->
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-        <p class="text-gray-500 text-sm mt-1">Overview of bookings and revenue</p>
-    </div>
-    <a href="{{ route('admin.bookings.calendar') }}" 
-       class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold shadow hover:shadow-lg transition-all duration-200 hover:scale-105">
-        <i class="fas fa-calendar-alt mr-2"></i>
-        Booking Calendar
-    </a>
+<!-- Header -->
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+    <p class="text-gray-500 text-sm mt-1">Overview of bookings and revenue</p>
 </div>
 
 <!-- Date Filter -->
@@ -88,13 +81,47 @@
         <h3 class="text-xl font-bold mb-4 text-gray-800">Revenue Summary</h3>
         <div class="space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <span class="text-gray-600">Total Revenue</span>
+                <span class="text-gray-600 font-medium">Total Verified Revenue</span>
                 <span class="text-2xl font-bold text-green-600">₱{{ number_format($revenueStats['total'], 2) }}</span>
             </div>
-            <div class="flex justify-between items-center">
-                <span class="text-gray-600">Pending Payments</span>
+            <div class="flex justify-between items-center border-b pb-3">
+                <span class="text-gray-600 font-medium">Pending Payments</span>
                 <span class="text-xl font-bold text-yellow-600">₱{{ number_format($revenueStats['pending'], 2) }}</span>
             </div>
+
+            {{-- Breakdown by payment method --}}
+            @if($revenueStats['by_method']->count() > 0)
+            <div class="pt-1">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Breakdown by Payment Method</p>
+                <div class="space-y-2">
+                    @foreach($revenueStats['by_method'] as $item)
+                    @php
+                        $icons = [
+                            'gcash'        => ['icon' => 'fas fa-mobile-alt',   'color' => 'text-blue-500',   'bg' => 'bg-blue-50'],
+                            'maya'         => ['icon' => 'fas fa-wallet',        'color' => 'text-green-500',  'bg' => 'bg-green-50'],
+                            'cash'         => ['icon' => 'fas fa-money-bill',    'color' => 'text-emerald-600','bg' => 'bg-emerald-50'],
+                            'bank transfer'=> ['icon' => 'fas fa-university',    'color' => 'text-indigo-500', 'bg' => 'bg-indigo-50'],
+                            'credit card'  => ['icon' => 'fas fa-credit-card',   'color' => 'text-purple-500', 'bg' => 'bg-purple-50'],
+                            'check'        => ['icon' => 'fas fa-money-check',   'color' => 'text-orange-500', 'bg' => 'bg-orange-50'],
+                            'unspecified'  => ['icon' => 'fas fa-question-circle','color'=> 'text-gray-400',   'bg' => 'bg-gray-50'],
+                        ];
+                        $key = strtolower(trim($item->method));
+                        $style = $icons[$key] ?? ['icon' => 'fas fa-receipt', 'color' => 'text-gray-500', 'bg' => 'bg-gray-50'];
+                    @endphp
+                    <div class="flex items-center justify-between {{ $style['bg'] }} rounded-lg px-3 py-2">
+                        <div class="flex items-center gap-2">
+                            <i class="{{ $style['icon'] }} {{ $style['color'] }} w-4 text-center"></i>
+                            <div>
+                                <span class="text-sm font-semibold text-gray-700">{{ ucwords($item->method) }}</span>
+                                <span class="text-xs text-gray-400 ml-1">({{ $item->count }} payment{{ $item->count > 1 ? 's' : '' }})</span>
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold text-gray-800">₱{{ number_format($item->total, 2) }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 

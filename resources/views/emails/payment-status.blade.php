@@ -326,14 +326,17 @@
                 </p>
             </div>
             
-            @if($payment->booking->booking_date->isFuture() && $payment->booking->booking_date->diffInDays(now()) <= 7)
+            @php
+                $daysUntilEvent = (int) \Carbon\Carbon::today()->diffInDays($payment->booking->booking_date, false);
+            @endphp
+            @if($daysUntilEvent >= 0 && $daysUntilEvent <= 7)
             <div style="background: #FEE2E2; padding: 15px; border-radius: 6px; margin-top: 10px; border: 1px solid #FECACA;">
                 <p style="color: #991B1B; margin: 0; font-size: 14px; font-weight: bold;">
-                    ⚠️ <strong>Event Date Approaching:</strong> Your event is in {{ $payment->booking->booking_date->diffInDays(now()) }} day(s). 
+                    ⚠️ <strong>Event Date Approaching:</strong> Your event is in {{ $daysUntilEvent }} day(s). 
                     Please settle the remaining balance as soon as possible to ensure everything is ready for your special day!
                 </p>
             </div>
-            @elseif($payment->booking->booking_date->isPast())
+            @elseif($daysUntilEvent < 0)
             <div style="background: #FEE2E2; padding: 15px; border-radius: 6px; margin-top: 10px; border: 1px solid #FECACA;">
                 <p style="color: #991B1B; margin: 0; font-size: 14px; font-weight: bold;">
                     🚨 <strong>Event Date Passed:</strong> Your event date was {{ $payment->booking->booking_date->format('F d, Y') }}. 

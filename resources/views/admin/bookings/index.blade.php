@@ -3,11 +3,7 @@
 @section('page-title', 'Bookings Management')
 
 @section('main-content')
-<div class="mb-6 flex justify-between items-center">
-    <a href="{{ route('admin.bookings.create') }}" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
-        <i class="fas fa-plus mr-2"></i>Create Booking
-    </a>
-    
+<div class="mb-6 flex justify-end items-center">
     <div class="flex space-x-4 items-center">
         <!-- Search Box -->
         <form method="GET" class="flex">

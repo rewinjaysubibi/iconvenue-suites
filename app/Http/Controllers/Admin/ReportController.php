@@ -26,6 +26,12 @@ class ReportController extends Controller
         $revenueStats = [
             'total' => Payment::whereBetween('created_at', [$startDate, $endDate])->where('status', 'verified')->sum('amount'),
             'pending' => Payment::whereBetween('created_at', [$startDate, $endDate])->where('status', 'pending')->sum('amount'),
+            'by_method' => Payment::whereBetween('created_at', [$startDate, $endDate])
+                ->where('status', 'verified')
+                ->selectRaw('COALESCE(NULLIF(payment_method, ""), "Unspecified") as method, SUM(amount) as total, COUNT(*) as count')
+                ->groupBy('method')
+                ->orderByDesc('total')
+                ->get(),
         ];
 
         // Separate top venues and suites

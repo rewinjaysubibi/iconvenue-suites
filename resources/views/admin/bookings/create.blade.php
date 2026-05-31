@@ -240,7 +240,7 @@
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Booking Date *</label>
-                    <input type="date" name="booking_date" id="booking_date" value="{{ old('booking_date') }}" required min="{{ date('Y-m-d') }}"
+                    <input type="date" name="booking_date" id="booking_date" value="{{ old('booking_date', request('booking_date')) }}" required min="{{ date('Y-m-d') }}"
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors">
                 </div>
 
