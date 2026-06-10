@@ -15,6 +15,14 @@
             </div>
 
             <div>
+                <label class="block text-gray-700 font-semibold mb-2">Room Number</label>
+                <input type="text" name="room_number" value="{{ old('room_number') }}" maxlength="50"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                    placeholder="e.g. 101, A-02, Suite 5">
+                <p class="text-xs text-gray-500 mt-1">Optional identifier for this suite room.</p>
+            </div>
+
+            <div>
                 <label class="block text-gray-700 font-semibold mb-2">Type</label>
                 <input type="text" value="Suite" readonly 
                     class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600">

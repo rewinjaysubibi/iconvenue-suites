@@ -69,21 +69,18 @@
                     <p class="text-gray-600 text-sm">Check-in / Check-out</p>
                     <p class="font-semibold text-gray-800">2:00 PM / 12:00 PM</p>
                 </div>
-                @elseif($booking->time_slots && !empty($booking->time_slots))
+                @elseif(!empty($booking->getTimeSlots()))
                 <div>
                     <p class="text-gray-600 text-sm">Time Slots</p>
                     <div class="flex flex-wrap gap-2">
-                        @foreach($booking->time_slots as $slot)
+                        @foreach($booking->getTimeSlots() as $slot)
                         <span class="px-3 py-1 rounded-full text-xs font-semibold
-                            @if($slot == 'morning') bg-blue-100 text-blue-800
-                            @elseif($slot == 'afternoon') bg-orange-100 text-orange-800
-                            @else bg-indigo-100 text-indigo-800
+                            @if($slot === 'morning') bg-blue-100 text-blue-800
+                            @elseif($slot === 'afternoon') bg-orange-100 text-orange-800
+                            @elseif($slot === 'evening') bg-indigo-100 text-indigo-800
+                            @else bg-gray-100 text-gray-800
                             @endif">
-                            {{ ucfirst($slot) }}
-                            @if($slot == 'morning') (8AM-12PM)
-                            @elseif($slot == 'afternoon') (1PM-5PM)
-                            @else (6PM-10PM)
-                            @endif
+                            {{ \App\Models\Booking::formatTimeSlotLabel($slot) }}
                         </span>
                         @endforeach
                     </div>

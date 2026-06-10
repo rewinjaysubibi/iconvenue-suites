@@ -187,6 +187,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Venue/Suite</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time Slot</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
@@ -211,6 +212,7 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 text-gray-600">{{ $booking->booking_date->format('M d, Y') }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ $booking->getReportTimeSlotDisplay() }}</td>
                     <td class="px-6 py-4 text-gray-600">₱{{ number_format($booking->total_amount, 2) }}</td>
                     <td class="px-6 py-4">
                         <span class="px-3 py-1 rounded-full text-xs font-semibold
@@ -234,7 +236,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="px-6 py-4 text-center text-gray-600">No bookings found for this period</td>
+                    <td colspan="9" class="px-6 py-4 text-center text-gray-600">No bookings found for this period</td>
                 </tr>
                 @endforelse
             </tbody>

@@ -111,17 +111,7 @@ class ReportController extends Controller
                 $balance = $booking->total_amount - $paidAmount;
                 $duration = $booking->booking_date->diffInDays($booking->end_date) + 1;
                 
-                $timeSlot = '';
-                if ($booking->venue->type == 'suite') {
-                    $timeSlot = 'Suite (22 hours)';
-                } elseif ($booking->time_slot) {
-                    $timeSlot = ucfirst($booking->time_slot);
-                    if ($booking->time_slot == 'morning') $timeSlot .= ' (8AM-12PM)';
-                    elseif ($booking->time_slot == 'afternoon') $timeSlot .= ' (1PM-5PM)';
-                    elseif ($booking->time_slot == 'evening') $timeSlot .= ' (6PM-10PM)';
-                } else {
-                    $timeSlot = 'Full Day';
-                }
+                $timeSlot = $booking->getReportTimeSlotDisplay();
 
                 fputcsv($file, [
                     $booking->id,

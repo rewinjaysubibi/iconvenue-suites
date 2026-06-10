@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+<div class="flex min-h-screen">
     <!-- Sidebar -->
-    <aside class="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl slide-in overflow-y-auto">
-        <div class="p-6 border-b border-gray-700">
+    <aside class="w-64 text-white shadow-2xl slide-in sticky top-0 h-screen overflow-y-auto flex-shrink-0" style="background: linear-gradient(180deg, #1a0e05 0%, #2d1a08 100%); border-right: 1px solid rgba(201,168,76,0.3);">
+        <div class="p-6" style="border-bottom: 1px solid rgba(201,168,76,0.3);">
             <div class="flex items-center space-x-3">
                 <img src="{{ asset('images/logo.jpg') }}" alt="Icon Venue & Suites" class="h-10 w-10 object-contain">
                 <div>
@@ -22,7 +22,7 @@
                 <i class="fas fa-calendar-check mr-3 w-5"></i>
                 <span class="font-medium">Bookings</span>
             </a>
-            <a href="{{ route('admin.bookings.calendar') }}" class="flex items-center px-4 py-3 mb-2 rounded-lg hover:bg-gray-700 transition-all duration-200 {{ request()->routeIs('admin.bookings.calendar*') || request()->routeIs('admin.bookings.create') ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg' : '' }}">
+            <a href="{{ route('admin.bookings.create') }}" class="flex items-center px-4 py-3 mb-2 rounded-lg hover:bg-gray-700 transition-all duration-200 {{ request()->routeIs('admin.bookings.create') ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg' : '' }}">
                 <i class="fas fa-calendar-plus mr-3 w-5"></i>
                 <span class="font-medium">New Booking</span>
             </a>
@@ -84,7 +84,7 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 flex flex-col min-w-0">
         <!-- Top Bar -->
         <header class="bg-white shadow-md fade-in">
             <div class="flex justify-between items-center px-8 py-4">
@@ -153,7 +153,7 @@
         </header>
 
         <!-- Page Content -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+        <main class="flex-1 overflow-x-hidden p-8">
             <div class="fade-in">
                 @yield('main-content')
             </div>
@@ -161,7 +161,7 @@
     </div>
     
     <!-- Floating Price Display (Only for booking pages) -->
-    @if(request()->routeIs('admin.bookings.create'))
+    @if(request()->routeIs('admin.bookings.create') && request()->filled('booking_date') && request()->filled('venue_id'))
     <div id="floatingPriceDisplay" class="floating-price-widget hidden">
         <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4 shadow-lg">
             <div class="text-center mb-4">
@@ -300,6 +300,39 @@
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+/* Sidebar active link */
+nav a.bg-gradient-to-r {
+    background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(139,105,20,0.3)) !important;
+    border-left: 3px solid #c9a84c;
+}
+
+/* Sidebar nav link hover */
+nav a:hover {
+    background: rgba(201,168,76,0.1) !important;
+}
+
+/* Header */
+header.bg-white {
+    background: linear-gradient(135deg, #1a0e05, #2d1a08) !important;
+    border-bottom: 1px solid rgba(201,168,76,0.3) !important;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* Page title gradient text */
+.bg-clip-text.text-transparent {
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    background-image: linear-gradient(135deg, #c9a84c, #f0d080) !important;
+    color: transparent !important;
+}
+
+/* Floating price widget */
+.floating-price-widget .bg-gradient-to-br {
+    background: linear-gradient(135deg, #2d1a08, #1a0e05) !important;
+    border: 1px solid rgba(201,168,76,0.4) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.1) !important;
 }
 
 /* Floating Price Widget */

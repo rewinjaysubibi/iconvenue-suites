@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 23, 2026 at 05:05 AM
+-- Generation Time: May 31, 2026 at 03:07 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `venue_booking`
+-- Database: `icon`
 --
 
 -- --------------------------------------------------------
@@ -37,9 +37,14 @@ CREATE TABLE `bookings` (
   `client_email` varchar(255) NOT NULL,
   `client_phone` varchar(255) NOT NULL,
   `booking_date` date NOT NULL,
+  `number_of_days` int(11) NOT NULL DEFAULT 1,
   `end_date` date NOT NULL,
-  `time_slot` varchar(255) DEFAULT NULL,
+  `time_slots` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`time_slots`)),
   `total_amount` decimal(10,2) NOT NULL,
+  `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `discount_percentage` decimal(5,2) DEFAULT NULL,
+  `discount_reason` varchar(255) DEFAULT NULL,
+  `original_amount` decimal(10,2) DEFAULT NULL,
   `status` enum('pending','confirmed','cancelled','completed') NOT NULL DEFAULT 'pending',
   `payment_status` enum('unpaid','partial','paid') NOT NULL DEFAULT 'unpaid',
   `notes` text DEFAULT NULL,
@@ -53,12 +58,8 @@ CREATE TABLE `bookings` (
 -- Dumping data for table `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `booking_reference`, `venue_id`, `package_id`, `staff_id`, `client_name`, `client_email`, `client_phone`, `booking_date`, `end_date`, `time_slot`, `total_amount`, `status`, `payment_status`, `notes`, `reminder_sent_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(11, 'IVS-2026-Q2CZ', 4, 4, 1, 'rewin jay', 'subibirewinjay@gmail.com', '09123456798', '2026-01-20', '2026-01-20', 'morning', 30000.00, 'confirmed', 'paid', NULL, NULL, '2026-01-18 07:30:18', '2026-01-18 07:44:13', NULL),
-(12, 'IVS-2026-6F5O', 4, NULL, 1, 'Demo Client', 'demo@example.com', '+63 123 456 7890', '2026-01-19', '2026-01-19', 'afternoon', 15000.00, 'confirmed', 'partial', 'Demo booking for testing reminder system', '2026-01-18 07:59:03', '2026-01-18 07:58:58', '2026-01-18 07:59:03', NULL),
-(13, 'IVS-2026-0VO3', 5, NULL, 1, 'rewin jay', 'subibirewinjay@gmail.com', '09123456789', '2026-01-20', '2026-01-20', NULL, 1800.00, 'completed', 'paid', NULL, NULL, '2026-01-19 08:30:28', '2026-01-19 08:32:36', NULL),
-(14, 'IVS-2026-A0U2', 4, 4, 2, 'jay', 'subibirewinjay@gmail.com', '09123456789', '2026-01-23', '2026-01-23', 'morning', 35000.00, 'confirmed', 'paid', 'please', NULL, '2026-01-22 07:36:46', '2026-01-22 07:37:20', NULL),
-(15, 'IVS-2026-72MP', 4, 4, 2, 'rewin jay', 'subibirewinjay@gmail.com', '09123456789', '2026-01-24', '2026-01-24', 'evening', 33000.00, 'confirmed', 'unpaid', NULL, NULL, '2026-01-22 07:45:22', '2026-01-22 07:45:22', NULL);
+INSERT INTO `bookings` (`id`, `booking_reference`, `venue_id`, `package_id`, `staff_id`, `client_name`, `client_email`, `client_phone`, `booking_date`, `number_of_days`, `end_date`, `time_slots`, `total_amount`, `discount_amount`, `discount_percentage`, `discount_reason`, `original_amount`, `status`, `payment_status`, `notes`, `reminder_sent_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(27, 'IVS-2026-IAWP', 15, NULL, 1, 'rewin jay', 'subibirewinjay@gmail.com', '09123456798', '2026-06-01', 1, '2026-06-01', NULL, 50000.01, 0.00, NULL, NULL, 50000.01, 'confirmed', 'paid', NULL, NULL, '2026-05-30 23:56:46', '2026-05-30 23:57:15', NULL);
 
 -- --------------------------------------------------------
 
@@ -76,14 +77,6 @@ CREATE TABLE `booking_addons` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `booking_addons`
---
-
-INSERT INTO `booking_addons` (`id`, `booking_id`, `venue_addon_id`, `quantity`, `price_at_booking`, `created_at`, `updated_at`) VALUES
-(1, 14, 6, 1, 5000.00, '2026-01-22 07:36:46', '2026-01-22 07:36:46'),
-(2, 15, 8, 1, 3000.00, '2026-01-22 07:45:22', '2026-01-22 07:45:22');
-
 -- --------------------------------------------------------
 
 --
@@ -95,6 +88,13 @@ CREATE TABLE `cache` (
   `value` mediumtext NOT NULL,
   `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `cache`
+--
+
+INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+('icon-venue-suites-cache-bookings_auto_complete_last_run', 'b:1;', 1780189476);
 
 -- --------------------------------------------------------
 
@@ -124,13 +124,6 @@ CREATE TABLE `carousel_images` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `carousel_images`
---
-
-INSERT INTO `carousel_images` (`id`, `image_path`, `title`, `order`, `is_active`, `created_at`, `updated_at`) VALUES
-(9, 'carousel/BJvm1TKX6jdmYp7rxqI8fc6g4plzl6WFpTYiwmL9.jpg', NULL, 0, 1, '2026-01-21 07:32:36', '2026-01-21 07:32:36');
-
 -- --------------------------------------------------------
 
 --
@@ -156,7 +149,7 @@ CREATE TABLE `contact_settings` (
 --
 
 INSERT INTO `contact_settings` (`id`, `phone`, `email`, `facebook`, `messenger`, `google_form_url`, `whatsapp`, `address`, `business_hours`, `created_at`, `updated_at`) VALUES
-(1, '+1234567890', 'subibirewinjay@gmail.com', 'https://www.facebook.com/ICONVenueandSuites', 'https://www.messenger.com/e2ee/t/7480004012115734/', 'https://forms.gle/9DorYJttnj3eYgUW9', '+1234567890', '123 Venue Street, City, Country', 'Monday - Sunday: 9:00 AM - 6:00 PM', '2026-01-15 19:03:34', '2026-01-15 20:52:53');
+(1, '0933 866 7716', 'iconvenueandsuites@gmail.com', 'https://www.facebook.com/ICONVenueandSuites', 'https://www.messenger.com/e2ee/t/7480004012115734/', 'https://forms.gle/9DorYJttnj3eYgUW9', '+1234567890', '123 Venue Street, City, Country', 'Monday - Sunday: 9:00 AM - 6:00 PM', '2026-01-15 19:03:34', '2026-04-19 16:02:19');
 
 -- --------------------------------------------------------
 
@@ -247,7 +240,14 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (19, '2026_01_18_155418_add_reminder_sent_at_to_bookings_table', 10),
 (20, '2026_01_19_142852_create_venue_addons_table', 11),
 (21, '2026_01_19_143024_create_booking_addons_table', 11),
-(22, '2026_01_19_145931_add_stock_fields_to_venue_addons_table', 12);
+(22, '2026_01_19_145931_add_stock_fields_to_venue_addons_table', 12),
+(23, '2026_01_26_233610_rename_venues_table_to_venues_and_suites', 13),
+(24, '2026_01_26_233719_update_foreign_keys_for_venues_and_suites_table', 13),
+(25, '2026_01_26_235327_add_discount_fields_to_bookings_table', 13),
+(26, '2026_01_27_001923_add_time_based_pricing_to_venue_packages_table', 13),
+(27, '2026_01_27_010840_update_time_slot_to_support_multiple_selections', 13),
+(28, '2026_02_11_005918_add_allow_same_day_booking_to_venues_and_suites_table', 13),
+(29, '2026_03_12_165636_add_number_of_days_to_bookings_table', 13);
 
 -- --------------------------------------------------------
 
@@ -288,10 +288,7 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`id`, `booking_id`, `verified_by`, `amount`, `payment_method`, `reference_number`, `proof_image`, `status`, `notes`, `verified_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(12, 11, 1, 15000.00, 'Cash', 'cash', NULL, 'verified', NULL, '2026-01-18 07:38:45', '2026-01-18 07:38:11', '2026-01-18 07:38:45', NULL),
-(13, 11, 1, 15000.00, 'GCash', '1234567', NULL, 'verified', NULL, '2026-01-18 07:44:13', '2026-01-18 07:43:48', '2026-01-18 07:44:13', NULL),
-(14, 13, 1, 1800.00, 'Cash', 'cash', NULL, 'verified', NULL, '2026-01-19 08:32:24', '2026-01-19 08:32:17', '2026-01-19 08:32:24', NULL),
-(15, 14, 2, 35000.00, 'Cash', 'cash', NULL, 'verified', NULL, '2026-01-22 07:37:20', '2026-01-22 07:37:17', '2026-01-22 07:37:20', NULL);
+(24, 27, 1, 50000.10, 'Cash', 'cash', NULL, 'verified', 'sdadsa', '2026-05-30 23:57:15', '2026-05-30 23:57:11', '2026-05-30 23:57:15', NULL);
 
 -- --------------------------------------------------------
 
@@ -369,10 +366,10 @@ INSERT INTO `users` (`id`, `name`, `email`, `profile_image`, `role_id`, `is_acti
 -- --------------------------------------------------------
 
 --
--- Table structure for table `venues`
+-- Table structure for table `venues_and_suites`
 --
 
-CREATE TABLE `venues` (
+CREATE TABLE `venues_and_suites` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
   `type` varchar(255) NOT NULL DEFAULT 'venue',
@@ -390,13 +387,18 @@ CREATE TABLE `venues` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `venues`
+-- Dumping data for table `venues_and_suites`
 --
 
-INSERT INTO `venues` (`id`, `name`, `type`, `description`, `capacity`, `price_per_day`, `price_morning`, `price_afternoon`, `price_evening`, `amenities`, `images`, `is_active`, `created_at`, `updated_at`) VALUES
-(4, 'diamond', 'venue', 'vasaasa', 100, 75000.00, 25000.00, 25000.00, 25000.00, '[null]', '[\"venues\\/lOiqhpghM7CDKBbl9LBtJLxp52PxYfAxsDqruL01.jpg\",\"venues\\/9uLfcFZaz3GONUSP7Fm5tL3HxZeocu0mr1FDYFhb.jpg\",\"venues\\/2n7zsJ0TDQiiwUOWBUzjOU59b41JZEIvWJwqAOki.jpg\"]', 1, '2026-01-16 06:42:49', '2026-01-16 06:49:57'),
-(5, 'jay', 'suite', 'dsadadas', 2, 1800.00, NULL, NULL, NULL, '[null]', '[\"venues\\/BssbZp2PamKjihdyDB2UQfYvegWyFCTv5PwjyoDe.png\"]', 1, '2026-01-19 08:29:18', '2026-01-19 08:29:18'),
-(6, 'sadasdas', 'venue', 'dasda', 122, 7500.00, 2500.00, 2500.00, 2500.00, '[\"dasdasd\"]', '[\"venues\\/1769008239_6970ec6fa8166.jpg\"]', 1, '2026-01-21 07:10:39', '2026-01-21 07:10:39');
+INSERT INTO `venues_and_suites` (`id`, `name`, `type`, `description`, `capacity`, `price_per_day`, `price_morning`, `price_afternoon`, `price_evening`, `amenities`, `images`, `is_active`, `created_at`, `updated_at`) VALUES
+(10, 'Standard Single', 'suite', 'Cancellation policy\r\nCancel for free before May 20, 2026\r\n\r\nStay flexible! Cancel for free 2 days before the booking. ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy).', 1, 1126.00, NULL, NULL, NULL, '[\"Featured amenities\",\"17 m\\u00b2\\/183 ft\\u00b2\",\"1 single bed\",\"Comforts\",\"Air conditioning\",\"One Single Bed\",\"WiFi\",\"Breakfast Included\"]', '[\"suites\\/1779067735_6a0a6b57eba75.jpg\"]', 1, '2026-05-18 00:44:19', '2026-05-18 01:28:55'),
+(11, 'Standard Room', 'suite', 'Cancellation policy\r\nNon-refundable (Low price!)\r\n\r\nThis special offer includes an extra-low price, but cannot be amended or cancelled. In case of a no-show, the property will not refund the booking. If you\'re sure of your travel dates, you can take advantage of this special offer!\r\n\r\nCancellation policy\r\nNon-refundable (Low price!)', 2, 1613.00, NULL, NULL, NULL, '[\"Wifi\",\"Breakfast Included\",\"No Windows view\",\"Private bathroom\",\"Walk-in shower\",\"Towels\",\"Toiletries\",\"TV\",\"Free instant coffee\",\"Laptop workspace\",\"Top floor available\",\"Non-smoking\"]', '[\"suites\\/1779065233_6a0a6191a4e10.webp\"]', 1, '2026-05-18 00:47:13', '2026-05-18 01:03:47'),
+(12, 'Deluxe Room', 'suite', 'Cancellation policy\r\nCancel for free 2 days before the Booking\r\n\r\nStay flexible! Cancel for free before May 20, 2026 ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy).', 2, 2169.00, NULL, NULL, NULL, '[\"Wifi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066188_6a0a654c20c90.webp\"]', 1, '2026-05-18 01:03:08', '2026-05-18 01:04:04'),
+(13, 'Triple Room', 'suite', 'Cancellation policy\r\nNon-refundable (Low price!)\r\n\r\nThis special offer includes an extra-low price, but cannot be amended or cancelled. In case of a no-show, the property will not refund the booking. If you\'re sure of your travel dates, you can take advantage of this special offer!', 3, 2150.00, NULL, NULL, NULL, '[\"WiFi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066340_6a0a65e4404a0.webp\"]', 1, '2026-05-18 01:05:40', '2026-05-18 01:05:40'),
+(14, 'Family Room', 'suite', 'Cancellation policy\r\nCancel for free 2 days before the booking\r\n\r\nStay flexible! Cancel for free before May 20, 2026 ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy)', 4, 3298.00, NULL, NULL, NULL, '[\"WiFi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066466_6a0a66621e6e2.webp\",\"suites\\/1779066466_6a0a666220b02.webp\",\"suites\\/1779066466_6a0a6662210b1.webp\",\"suites\\/1779066466_6a0a6662216ad.jpg\"]', 1, '2026-05-18 01:07:46', '2026-05-18 01:07:46'),
+(15, 'Platinum', 'venue', 'Platinum Venue', 50, 50000.00, 16666.67, 16666.67, 16666.67, '[\"Food\",\"Catering\",\"For 4 hours using of function hall\"]', '[\"venues\\/1779066873_6a0a67f949891.jpg\"]', 1, '2026-05-18 01:14:33', '2026-05-18 01:26:41'),
+(16, 'VIP Room', 'venue', 'vip room', 15, 21000.00, 7000.00, 7000.00, 7000.00, '[\"Food\",\"Catering\",\"Projector\"]', '[\"venues\\/1779067504_6a0a6a70d5ff9.jpg\"]', 1, '2026-05-18 01:21:39', '2026-05-18 01:25:04'),
+(17, 'Diamond', 'venue', 'Diamond', 50, 54000.00, 18000.00, 18000.00, 18000.00, '[]', '[\"venues\\/1779067363_6a0a69e33d38f.jpg\"]', 1, '2026-05-18 01:22:43', '2026-05-18 01:22:43');
 
 -- --------------------------------------------------------
 
@@ -425,7 +427,7 @@ CREATE TABLE `venue_addons` (
 --
 
 INSERT INTO `venue_addons` (`id`, `name`, `description`, `price`, `category`, `is_active`, `sort_order`, `stock_quantity`, `track_stock`, `low_stock_threshold`, `notes`, `created_at`, `updated_at`) VALUES
-(6, 'Photo Booth Setup', 'Professional photo booth with props and backdrop', 5000.00, 'decoration', 1, 6, 0, 1, 0, NULL, '2026-01-19 06:33:21', '2026-01-22 07:36:46'),
+(6, 'Photo Booth Setup', 'Professional photo booth with props and backdrop', 5000.00, 'decoration', 1, 6, 9, 1, 0, NULL, '2026-01-19 06:33:21', '2026-03-20 08:06:23'),
 (7, 'Sound System Upgrade', 'Professional sound system with microphones', 2500.00, 'equipment', 1, 7, NULL, 0, NULL, NULL, '2026-01-19 06:33:21', '2026-01-19 06:33:21'),
 (8, 'Projector & Screen', 'HD projector with large screen for presentations', 3000.00, 'equipment', 1, 8, NULL, 0, NULL, NULL, '2026-01-19 06:33:21', '2026-01-19 06:33:21'),
 (9, 'Additional Tables & Chairs', 'Extra seating arrangement (10 chairs + 2 tables)', 1500.00, 'equipment', 1, 9, NULL, 0, NULL, NULL, '2026-01-19 06:33:21', '2026-01-19 06:33:21'),
@@ -445,6 +447,10 @@ CREATE TABLE `venue_packages` (
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
   `price` decimal(10,2) NOT NULL,
+  `price_morning` decimal(10,2) DEFAULT NULL,
+  `price_afternoon` decimal(10,2) DEFAULT NULL,
+  `price_evening` decimal(10,2) DEFAULT NULL,
+  `has_time_based_pricing` tinyint(1) NOT NULL DEFAULT 0,
   `inclusions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`inclusions`)),
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -455,8 +461,9 @@ CREATE TABLE `venue_packages` (
 -- Dumping data for table `venue_packages`
 --
 
-INSERT INTO `venue_packages` (`id`, `venue_id`, `name`, `description`, `price`, `inclusions`, `is_active`, `created_at`, `updated_at`) VALUES
-(4, 4, 'birthday package', 'sadasd', 30000.00, '[\"table\"]', 1, '2026-01-16 06:43:19', '2026-01-18 09:42:20');
+INSERT INTO `venue_packages` (`id`, `venue_id`, `name`, `description`, `price`, `price_morning`, `price_afternoon`, `price_evening`, `has_time_based_pricing`, `inclusions`, `is_active`, `created_at`, `updated_at`) VALUES
+(5, 15, 'All in wedding package', 'Wedding', 50999.00, NULL, NULL, NULL, 0, '[\"Food\",\"Catering\",\"4 hours use of function hall\"]', 1, '2026-05-18 01:15:51', '2026-05-18 01:16:27'),
+(6, 17, 'Birthday Package', 'Birthday', 54000.00, 16000.00, 16000.00, 16000.00, 1, '[\"Food\",\"Catering\"]', 1, '2026-05-18 01:24:11', '2026-05-18 01:24:11');
 
 --
 -- Indexes for dumped tables
@@ -569,9 +576,9 @@ ALTER TABLE `users`
   ADD KEY `users_role_id_foreign` (`role_id`);
 
 --
--- Indexes for table `venues`
+-- Indexes for table `venues_and_suites`
 --
-ALTER TABLE `venues`
+ALTER TABLE `venues_and_suites`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -595,13 +602,13 @@ ALTER TABLE `venue_packages`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `booking_addons`
 --
 ALTER TABLE `booking_addons`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `carousel_images`
@@ -631,13 +638,13 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -652,10 +659,10 @@ ALTER TABLE `users`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `venues`
+-- AUTO_INCREMENT for table `venues_and_suites`
 --
-ALTER TABLE `venues`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+ALTER TABLE `venues_and_suites`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `venue_addons`
@@ -667,7 +674,7 @@ ALTER TABLE `venue_addons`
 -- AUTO_INCREMENT for table `venue_packages`
 --
 ALTER TABLE `venue_packages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
@@ -679,7 +686,7 @@ ALTER TABLE `venue_packages`
 ALTER TABLE `bookings`
   ADD CONSTRAINT `bookings_package_id_foreign` FOREIGN KEY (`package_id`) REFERENCES `venue_packages` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `bookings_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `bookings_venue_id_foreign` FOREIGN KEY (`venue_id`) REFERENCES `venues` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `bookings_venue_id_foreign` FOREIGN KEY (`venue_id`) REFERENCES `venues_and_suites` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `booking_addons`
@@ -705,7 +712,7 @@ ALTER TABLE `users`
 -- Constraints for table `venue_packages`
 --
 ALTER TABLE `venue_packages`
-  ADD CONSTRAINT `venue_packages_venue_id_foreign` FOREIGN KEY (`venue_id`) REFERENCES `venues` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `venue_packages_venue_id_foreign` FOREIGN KEY (`venue_id`) REFERENCES `venues_and_suites` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

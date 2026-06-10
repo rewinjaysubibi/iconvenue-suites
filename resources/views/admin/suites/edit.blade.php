@@ -15,6 +15,14 @@
                     class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
             </div>
 
+            <div id="roomNumberField" style="{{ $venue->type == 'suite' ? '' : 'display: none;' }}">
+                <label class="block text-gray-700 font-semibold mb-2">Room Number</label>
+                <input type="text" name="room_number" value="{{ old('room_number', $venue->room_number) }}" maxlength="50"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                    placeholder="e.g. 101, A-02, Suite 5">
+                <p class="text-xs text-gray-500 mt-1">Optional identifier for this suite room.</p>
+            </div>
+
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Type *</label>
                 <select name="type" id="typeSelect" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
@@ -133,11 +141,16 @@ document.addEventListener('DOMContentLoaded', function() {
             timePricingNote.textContent = 'Suites use standard 22-hour booking (Check-in: 2PM, Check-out: 12PM next day)';
             // Clear time pricing values for suites
             document.querySelectorAll('#timePricingFields input').forEach(input => input.value = '');
+            // Show room number for suites
+            document.getElementById('roomNumberField').style.display = '';
         } else {
             nameLabel.textContent = 'Venue Name *';
             // Show time-based pricing for venues
             timePricingFields.style.display = 'grid';
             timePricingNote.textContent = 'For venues only. Suites use standard 22-hour booking (Check-in: 2PM, Check-out: 12PM)';
+            // Hide room number for venues
+            document.getElementById('roomNumberField').style.display = 'none';
+            document.querySelector('[name="room_number"]').value = '';
         }
     }
     

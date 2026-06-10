@@ -1,4 +1,4 @@
-﻿@extends('layouts.public')
+@extends('layouts.public')
 
 @section('main-content')
 <div class="container mx-auto px-4 py-12">
@@ -100,6 +100,16 @@
                     <p class="text-2xl font-bold text-purple-600">{{ ucfirst($venue->type) }}</p>
                 </div>
             </div>
+
+            @if($venue->type == 'suite' && $venue->room_number)
+            <div class="mb-6">
+                <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-5 py-3">
+                    <i class="fas fa-door-open text-blue-600 text-xl"></i>
+                    <span class="text-gray-700 font-semibold">Room Number:</span>
+                    <span class="text-xl font-bold text-blue-700">{{ $venue->room_number }}</span>
+                </div>
+            </div>
+            @endif
 
             <!-- Interactive Pricing Selection -->
             <div class="mb-8">
@@ -307,6 +317,7 @@
                                     <h4 class="font-semibold text-gray-800">Suite Booking</h4>
                                 </div>
                                 <p class="text-sm text-gray-600 mb-2">22-hour stay (2:00 PM - 12:00 PM next day)</p>
+                                <p class="text-xs text-blue-700 mb-2"><i class="fas fa-walking mr-1"></i>Same-day walk-in available if suite is open</p>
                                 <div class="text-2xl font-bold text-blue-600">₱{{ number_format($venue->price_per_day, 0) }}</div>
                                 <div class="text-xs text-gray-500 mt-1">per night</div>
                             </div>

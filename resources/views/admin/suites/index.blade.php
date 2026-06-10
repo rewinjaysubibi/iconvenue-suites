@@ -27,6 +27,7 @@
         <thead class="bg-gray-50">
             <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Room No.</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capacity</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price/Day</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -41,6 +42,15 @@
                         <i class="fas fa-bed text-blue-600 text-xl mr-3"></i>
                         <div class="font-semibold text-gray-800">{{ $suite->name }}</div>
                     </div>
+                </td>
+                <td class="px-6 py-4 text-gray-600">
+                    @if($suite->room_number)
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                            <i class="fas fa-door-open mr-1"></i>{{ $suite->room_number }}
+                        </span>
+                    @else
+                        <span class="text-gray-400 text-xs">—</span>
+                    @endif
                 </td>
                 <td class="px-6 py-4 text-gray-600">{{ $suite->capacity }} guests</td>
                 <td class="px-6 py-4 text-gray-600">₱{{ number_format($suite->price_per_day, 2) }}</td>
@@ -94,7 +104,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="px-6 py-12 text-center">
+                <td colspan="6" class="px-6 py-12 text-center">
                     <i class="fas fa-bed text-gray-300 text-6xl mb-4"></i>
                     <p class="text-gray-600 text-xl">No suites found</p>
                     <a href="{{ route('admin.suites.create') }}" class="inline-block mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">

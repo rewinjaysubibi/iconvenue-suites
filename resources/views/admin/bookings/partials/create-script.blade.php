@@ -1,4 +1,4 @@
-﻿        <script>
+        <script>
         // Venue packages data (passed from backend)
         const venuePackages = @json($venuePackages);
 
@@ -76,7 +76,7 @@
                     const packageData = venuePackages[venueId]?.find(pkg => pkg.id == packageId);
                     
                     // Check if multiple time slots are selected
-                    const multipleSelected = document.querySelector('input[name="time_slot_type"][value="multiple"]').checked;
+                    const multipleSelected = document.querySelector('input[name="time_slot_type"][value="multiple"]')?.checked ?? false;
                     
                     if (multipleSelected) {
                         // Calculate price for selected time slots with package pricing
@@ -196,7 +196,7 @@
                         }
                     } else {
                         // Check if multiple time slots are selected
-                        const multipleSelected = document.querySelector('input[name="time_slot_type"][value="multiple"]').checked;
+                        const multipleSelected = document.querySelector('input[name="time_slot_type"][value="multiple"]')?.checked ?? false;
                         
                         if (multipleSelected) {
                             // Calculate price for selected time slots
@@ -266,8 +266,12 @@
                     floatingPriceDescription.textContent = description;
                     
                     // Update venue price in breakdown
-                    floatingVenueLabel.textContent = selectedOption.getAttribute('data-type') === 'suite' ? 'Suite' : 'Venue';
-                    floatingVenuePrice.textContent = '₱' + price.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                    if (floatingVenueLabel) {
+                        floatingVenueLabel.textContent = selectedOption.getAttribute('data-type') === 'suite' ? 'Suite' : 'Venue';
+                    }
+                    if (floatingVenuePrice) {
+                        floatingVenuePrice.textContent = '₱' + price.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                    }
                     
                     floatingPriceDisplay.classList.remove('hidden');
                 } else {
@@ -353,7 +357,7 @@
                     checkboxCustom.classList.add('bg-orange-600', 'border-orange-600');
                     checkboxCustom.querySelector('i').classList.remove('opacity-0');
                     checkboxCustom.querySelector('i').classList.add('opacity-100');
-                    quantitySection.classList.remove('hidden');
+                    quantitySection.classList.add('expanded');
                     addonItem.classList.add('ring-2', 'ring-orange-300', 'bg-orange-50');
                     
                     // Set max quantity for input
@@ -376,7 +380,7 @@
                     checkboxCustom.classList.remove('bg-orange-600', 'border-orange-600');
                     checkboxCustom.querySelector('i').classList.remove('opacity-100');
                     checkboxCustom.querySelector('i').classList.add('opacity-0');
-                    quantitySection.classList.add('hidden');
+                    quantitySection.classList.remove('expanded');
                     addonItem.classList.remove('ring-2', 'ring-orange-300', 'bg-orange-50');
                     
                     // Reset quantity controls
@@ -408,8 +412,6 @@
 
             // Handle quantity changes
             document.addEventListener('click', function(e) {
-                e.stopPropagation(); // Prevent event bubbling
-                
                 if (e.target.closest('.quantity-plus')) {
                     e.preventDefault(); // Prevent form submission
                     
@@ -773,6 +775,121 @@
                     }
                 }
             }
+
+            // Time slot controls — scoped to #timeSlotField so clicks always register
+            const multipleTimeSlotsContainer = document.getElementById('multipleTimeSlotsContainer');
+
+            function syncTimeSlotTypeUi(radioValue) {
+                document.querySelectorAll('#timeSlotField .time-slot-radio').forEach(r => {
+                    const isSelected = r.value === radioValue;
+                    r.checked = isSelected;
+                    const customRadio = r.parentElement?.querySelector('.time-slot-radio-custom');
+                    const dot = customRadio?.querySelector('div');
+                    if (!customRadio || !dot) return;
+
+                    if (isSelected) {
+                        customRadio.classList.add('border-purple-600');
+                        dot.classList.remove('opacity-0');
+                        dot.classList.add('opacity-100');
+                    } else {
+                        customRadio.classList.remove('border-purple-600');
+                        dot.classList.remove('opacity-100');
+                        dot.classList.add('opacity-0');
+                    }
+                });
+            }
+
+            function clearTimeSlotCheckboxes() {
+                document.querySelectorAll('#timeSlotField .time-slot-checkbox').forEach(checkbox => {
+                    checkbox.checked = false;
+                    const customCheckbox = checkbox.parentElement?.querySelector('.time-slot-checkbox-custom');
+                    const icon = customCheckbox?.querySelector('i');
+                    if (!customCheckbox || !icon) return;
+                    customCheckbox.classList.remove('bg-purple-600', 'border-purple-600');
+                    icon.classList.remove('opacity-100');
+                    icon.classList.add('opacity-0');
+                });
+            }
+
+            function selectTimeSlotType(radioValue) {
+                syncTimeSlotTypeUi(radioValue);
+
+                if (!multipleTimeSlotsContainer) return;
+
+                if (radioValue === 'multiple') {
+                    multipleTimeSlotsContainer.classList.remove('hidden');
+                    updateTimeSlotPrices();
+                } else {
+                    multipleTimeSlotsContainer.classList.add('hidden');
+                    clearTimeSlotCheckboxes();
+                }
+
+                updatePriceDisplay();
+                updateTotalWithAddons();
+            }
+
+            function toggleTimeSlotCheckbox(checkboxOption) {
+                const checkbox = checkboxOption.querySelector('.time-slot-checkbox');
+                const customCheckbox = checkboxOption.querySelector('.time-slot-checkbox-custom');
+                const icon = customCheckbox?.querySelector('i');
+                if (!checkbox || !customCheckbox || !icon) return;
+
+                if (!checkbox.checked) {
+                    const currentlyChecked = [...document.querySelectorAll('#timeSlotField .time-slot-checkbox:checked')].map(c => c.value);
+                    const newSlot = checkbox.value;
+
+                    if (newSlot === 'evening' && currentlyChecked.includes('morning') && !currentlyChecked.includes('afternoon')) {
+                        alert('Invalid combination: Morning and Evening cannot be selected without Afternoon. Please select Morning + Afternoon or Afternoon + Evening.');
+                        return;
+                    }
+                    if (newSlot === 'morning' && currentlyChecked.includes('evening') && !currentlyChecked.includes('afternoon')) {
+                        alert('Invalid combination: Morning and Evening cannot be selected without Afternoon. Please select Morning + Afternoon or Afternoon + Evening.');
+                        return;
+                    }
+                }
+
+                checkbox.checked = !checkbox.checked;
+
+                if (checkbox.checked) {
+                    customCheckbox.classList.add('bg-purple-600', 'border-purple-600');
+                    icon.classList.remove('opacity-0');
+                    icon.classList.add('opacity-100');
+                } else {
+                    customCheckbox.classList.remove('bg-purple-600', 'border-purple-600');
+                    icon.classList.remove('opacity-100');
+                    icon.classList.add('opacity-0');
+                }
+
+                updateTimeSlotTotal();
+                updatePriceDisplay();
+                updateTotalWithAddons();
+            }
+
+            if (timeSlotField) {
+                timeSlotField.addEventListener('click', function(e) {
+                    const typeOption = e.target.closest('.time-slot-option');
+                    if (typeOption && timeSlotField.contains(typeOption)) {
+                        e.preventDefault();
+                        const value = typeOption.getAttribute('data-value');
+                        selectTimeSlotType(value === 'multiple' ? 'multiple' : 'full_day');
+                        return;
+                    }
+
+                    const checkboxOption = e.target.closest('.time-slot-checkbox-option');
+                    if (checkboxOption && timeSlotField.contains(checkboxOption)) {
+                        e.preventDefault();
+                        toggleTimeSlotCheckbox(checkboxOption);
+                    }
+                });
+
+                timeSlotField.querySelectorAll('.time-slot-radio').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (this.checked) {
+                            selectTimeSlotType(this.value);
+                        }
+                    });
+                });
+            }
             
             // Pre-selection logic for venue_id parameter
             @if(isset($selectedVenueId) && $selectedVenueId)
@@ -999,100 +1116,6 @@
                 updateTotalWithAddons(); // Update total price including add-ons
             });
             
-            // Handle time slot type selection (Full Day vs Multiple Slots)
-            const timeSlotOptions = document.querySelectorAll('.time-slot-option');
-            const timeSlotRadios = document.querySelectorAll('.time-slot-radio');
-            const multipleTimeSlotsContainer = document.getElementById('multipleTimeSlotsContainer');
-            const timeSlotCheckboxes = document.querySelectorAll('.time-slot-checkbox');
-            const timeSlotCheckboxOptions = document.querySelectorAll('.time-slot-checkbox-option');
-            
-            // Handle time slot type option clicks
-            timeSlotOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    const value = this.getAttribute('data-value');
-                    const radio = this.querySelector('.time-slot-radio');
-                    
-                    // Uncheck all radios
-                    timeSlotRadios.forEach(r => {
-                        r.checked = false;
-                        const customRadio = r.parentElement.querySelector('.time-slot-radio-custom');
-                        const dot = customRadio.querySelector('div');
-                        customRadio.classList.remove('border-purple-600');
-                        dot.classList.remove('opacity-100');
-                        dot.classList.add('opacity-0');
-                    });
-                    
-                    // Check selected radio
-                    radio.checked = true;
-                    const customRadio = this.querySelector('.time-slot-radio-custom');
-                    const dot = customRadio.querySelector('div');
-                    customRadio.classList.add('border-purple-600');
-                    dot.classList.remove('opacity-0');
-                    dot.classList.add('opacity-100');
-                    
-                    // Show/hide multiple slots container
-                    if (value === 'multiple') {
-                        multipleTimeSlotsContainer.classList.remove('hidden');
-                        updateTimeSlotPrices();
-                    } else {
-                        multipleTimeSlotsContainer.classList.add('hidden');
-                        // Clear all checkbox selections
-                        timeSlotCheckboxes.forEach(checkbox => {
-                            checkbox.checked = false;
-                            const customCheckbox = checkbox.parentElement.querySelector('.time-slot-checkbox-custom');
-                            const icon = customCheckbox.querySelector('i');
-                            customCheckbox.classList.remove('bg-purple-600', 'border-purple-600');
-                            icon.classList.remove('opacity-100');
-                            icon.classList.add('opacity-0');
-                        });
-                    }
-                    
-                    updatePriceDisplay();
-                    updateTotalWithAddons(); // Update total price including add-ons
-                });
-            });
-            
-            // Handle time slot checkbox clicks
-            timeSlotCheckboxOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    const checkbox = this.querySelector('.time-slot-checkbox');
-                    const customCheckbox = this.querySelector('.time-slot-checkbox-custom');
-                    const icon = customCheckbox.querySelector('i');
-                    
-                    // If trying to check, validate the combination first
-                    if (!checkbox.checked) {
-                        const currentlyChecked = [...document.querySelectorAll('.time-slot-checkbox:checked')].map(c => c.value);
-                        const newSlot = checkbox.value;
-
-                        // Block morning+evening combination
-                        if (newSlot === 'evening' && currentlyChecked.includes('morning') && !currentlyChecked.includes('afternoon')) {
-                            alert('Invalid combination: Morning and Evening cannot be selected without Afternoon. Please select Morning + Afternoon or Afternoon + Evening.');
-                            return;
-                        }
-                        if (newSlot === 'morning' && currentlyChecked.includes('evening') && !currentlyChecked.includes('afternoon')) {
-                            alert('Invalid combination: Morning and Evening cannot be selected without Afternoon. Please select Morning + Afternoon or Afternoon + Evening.');
-                            return;
-                        }
-                    }
-
-                    checkbox.checked = !checkbox.checked;
-                    
-                    if (checkbox.checked) {
-                        customCheckbox.classList.add('bg-purple-600', 'border-purple-600');
-                        icon.classList.remove('opacity-0');
-                        icon.classList.add('opacity-100');
-                    } else {
-                        customCheckbox.classList.remove('bg-purple-600', 'border-purple-600');
-                        icon.classList.remove('opacity-100');
-                        icon.classList.add('opacity-0');
-                    }
-                    
-                    updateTimeSlotTotal();
-                    updatePriceDisplay();
-                    updateTotalWithAddons();
-                });
-            });
-            
             // Update time slot prices based on selected venue and package
             function updateTimeSlotPrices() {
                 const selectedOption = venueSelect.options[venueSelect.selectedIndex];
@@ -1146,7 +1169,7 @@
                 const selectedPackage = packageSelect.options[packageSelect.selectedIndex];
                 let total = 0;
                 
-                timeSlotCheckboxes.forEach(checkbox => {
+                document.querySelectorAll('#timeSlotField .time-slot-checkbox').forEach(checkbox => {
                     if (checkbox.checked) {
                         const slot = checkbox.value;
                         let slotPrice = 0;

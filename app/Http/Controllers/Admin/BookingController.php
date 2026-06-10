@@ -37,13 +37,19 @@ class BookingController extends Controller
 
     public function create(Request $request)
     {
+        if (!$request->filled('venue_id') || !$request->filled('booking_date')) {
+            return view('admin.bookings.calendar', [
+                'isBookingEntry' => true,
+                'highlightVenueId' => $request->get('venue_id'),
+            ]);
+        }
+
         $venues = Venue::where('is_active', true)->with('activePackages')->get();
         $addons = \App\Models\VenueAddon::active()->orderBy('category')->orderBy('sort_order')->get()->groupBy('category');
         $selectedVenueId = $request->get('venue_id');
-        
-        // Prepare venue packages data for JavaScript
-        $venuePackages = $venues->mapWithKeys(function($venue) {
-            return [$venue->id => $venue->activePackages->map(function($package) {
+
+        $venuePackages = $venues->mapWithKeys(function ($venue) {
+            return [$venue->id => $venue->activePackages->map(function ($package) {
                 return [
                     'id' => $package->id,
                     'name' => $package->name,
@@ -51,11 +57,11 @@ class BookingController extends Controller
                     'price_morning' => $package->price_morning,
                     'price_afternoon' => $package->price_afternoon,
                     'price_evening' => $package->price_evening,
-                    'has_time_based_pricing' => $package->has_time_based_pricing
+                    'has_time_based_pricing' => $package->has_time_based_pricing,
                 ];
             })];
         });
-        
+
         return view('admin.bookings.create', compact('venues', 'addons', 'selectedVenueId', 'venuePackages'));
     }
 
@@ -92,32 +98,35 @@ class BookingController extends Controller
             ])->withInput();
         }
 
-        // If booking is for TODAY, check that selected time slots haven't already passed
-        if ($bookingDate->isToday()) {
+        $venue = Venue::findOrFail($validated['venue_id']);
+
+        // If booking is for TODAY, check that selected time slots haven't already started (venues only)
+        // Suites allow same-day walk-in bookings as long as the suite is not already booked.
+        if ($bookingDate->isToday() && $venue->type !== 'suite') {
             $now = \Carbon\Carbon::now();
             $currentHour = $now->hour;
 
-            // Time slot end hours
-            $slotEndHours = [
-                'morning'   => 12, // ends 12:00 PM
-                'afternoon' => 17, // ends  5:00 PM
-                'evening'   => 22, // ends 10:00 PM
+            // Time slot START hours — a slot cannot be booked once it has started
+            $slotStartHours = [
+                'morning'   =>  8, // starts 8:00 AM
+                'afternoon' => 13, // starts 1:00 PM
+                'evening'   => 18, // starts 6:00 PM
             ];
 
             $isFullDay = empty($validated['time_slots']) || ($request->time_slot_type === 'full_day');
 
             if ($isFullDay) {
-                // Full day: all slots must not have passed — block if past 10 PM
-                if ($currentHour >= 22) {
+                // Full day: cannot book if the morning slot has already started
+                if ($currentHour >= 8) {
                     return back()->withErrors([
-                        'booking_date' => 'Cannot create a full-day booking for today — all time slots have already passed.'
+                        'booking_date' => 'Cannot create a full-day booking for today — the morning slot has already started (8:00 AM).'
                     ])->withInput();
                 }
             } else {
                 // Check each selected slot
                 $expiredSlots = [];
                 foreach ($validated['time_slots'] as $slot) {
-                    if (isset($slotEndHours[$slot]) && $currentHour >= $slotEndHours[$slot]) {
+                    if (isset($slotStartHours[$slot]) && $currentHour >= $slotStartHours[$slot]) {
                         $expiredSlots[] = ucfirst($slot);
                     }
                 }
@@ -133,7 +142,7 @@ class BookingController extends Controller
                         $expiredSlots
                     ));
                     return back()->withErrors([
-                        'time_slots' => "The following time slot(s) have already passed for today: {$details}. Please select a future time slot or choose a different date."
+                        'time_slots' => "The following time slot(s) have already started or passed for today: {$details}. Please select a future time slot or choose a different date."
                     ])->withInput();
                 }
             }
@@ -149,8 +158,6 @@ class BookingController extends Controller
             }
         }
 
-        $venue = Venue::findOrFail($validated['venue_id']);
-        
         // Calculate number of days and end_date
         $days = $request->number_of_days ?? 1;
         $validated['number_of_days'] = $days;
@@ -165,8 +172,15 @@ class BookingController extends Controller
             $validated['end_date'] = $validated['booking_date'];
         }
 
-        if (!$venue->isAvailable($validated['booking_date'], $validated['end_date'])) {
-            return back()->withErrors(['booking_date' => 'Venue is not available for selected date range.'])->withInput();
+        $requestedTimeSlots = ($request->time_slot_type === 'multiple' && !empty($validated['time_slots']))
+            ? $validated['time_slots']
+            : [];
+
+        if (!$venue->isAvailable($validated['booking_date'], $validated['end_date'], null, $requestedTimeSlots)) {
+            $errorMessage = !empty($requestedTimeSlots)
+                ? 'One or more selected time slots are already booked for this date.'
+                : 'Venue is not available for selected date range.';
+            return back()->withErrors(['booking_date' => $errorMessage])->withInput();
         }
         
         // Calculate venue/package amount
@@ -383,8 +397,15 @@ class BookingController extends Controller
             $validated['end_date'] = $validated['booking_date'];
         }
 
-        if (!$venue->isAvailable($validated['booking_date'], $validated['end_date'], $booking->id)) {
-            return back()->withErrors(['booking_date' => 'Venue is not available for selected date range.'])->withInput();
+        $requestedTimeSlots = ($request->time_slot_type === 'multiple' && !empty($validated['time_slots']))
+            ? $validated['time_slots']
+            : [];
+
+        if (!$venue->isAvailable($validated['booking_date'], $validated['end_date'], $booking->id, $requestedTimeSlots)) {
+            $errorMessage = !empty($requestedTimeSlots)
+                ? 'One or more selected time slots are already booked for this date.'
+                : 'Venue is not available for selected date range.';
+            return back()->withErrors(['booking_date' => $errorMessage])->withInput();
         }
 
         // Recalculate amount — mirrors store() logic
@@ -513,101 +534,205 @@ class BookingController extends Controller
             ->with('success', 'Booking marked as completed! Email notification sent to client.');
     }
     public function calendar()
-        {
-            $venues = Venue::where('is_active', true)->orderBy('type')->orderBy('name')->get();
-            return view('admin.bookings.calendar', compact('venues'));
-        }
+    {
+        return redirect()->route('admin.bookings.create');
+    }
 
-        public function calendarData(Request $request)
-        {
-            $year  = (int) ($request->year  ?? date('Y'));
-            $month = (int) ($request->month ?? date('n'));
-            $month = max(1, min(12, $month));
-            $year  = max(2020, min(2030, $year));
+    public function calendarData(Request $request)
+    {
+        $year = (int) ($request->year ?? date('Y'));
+        $month = (int) ($request->month ?? date('n'));
+        $month = max(1, min(12, $month));
+        $year = max(2020, min(2030, $year));
 
-            $start = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $end   = $start->copy()->endOfMonth();
+        $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
 
-            $venues = Venue::where('is_active', true)->orderBy('type')->orderBy('name')->get();
+        $venues = Venue::where('is_active', true)->orderBy('type')->orderBy('name')->get();
 
-            $bookings = Booking::with(['venue', 'package'])
-                ->whereIn('venue_id', $venues->pluck('id'))
-                ->where('status', '!=', 'cancelled')
-                ->where(function ($q) use ($start, $end) {
-                    $q->whereBetween('booking_date', [$start, $end])
-                      ->orWhereBetween('end_date', [$start, $end]);
-                })
-                ->get();
-
-            // Build calendar grid: days × venues
-            $days = [];
-            $current = $start->copy();
-            while ($current <= $end) {
-                $dateStr = $current->format('Y-m-d');
-                $dayData = [
-                    'date'       => $dateStr,
-                    'day'        => $current->day,
-                    'day_name'   => $current->format('D'),
-                    'is_today'   => $current->isToday(),
-                    'is_past'    => $current->isPast() && !$current->isToday(),
-                    'is_weekend' => $current->isWeekend(),
-                    'venues'     => [],
-                ];
-
-                foreach ($venues as $venue) {
-                    $dayBookings = $bookings->filter(function ($b) use ($venue, $dateStr) {
-                        return $b->venue_id === $venue->id
-                            && $b->booking_date->format('Y-m-d') <= $dateStr
-                            && $b->end_date->format('Y-m-d') >= $dateStr;
+        $bookings = Booking::with(['venue', 'package'])
+            ->whereIn('venue_id', $venues->pluck('id'))
+            ->where('status', '!=', 'cancelled')
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('booking_date', [$start, $end])
+                    ->orWhereBetween('end_date', [$start, $end])
+                    ->orWhere(function ($q2) use ($start, $end) {
+                        $q2->where('booking_date', '<=', $start)
+                            ->where('end_date', '>=', $end);
                     });
+            })
+            ->get();
 
-                    $dayData['venues'][$venue->id] = $dayBookings->map(function ($b) {
-                        return [
-                            'id'              => $b->id,
-                            'reference'       => $b->booking_reference,
-                            'client_name'     => $b->client_name,
-                            'client_email'    => $b->client_email,
-                            'client_phone'    => $b->client_phone,
-                            'status'          => $b->status,
-                            'payment_status'  => $b->payment_status,
-                            'total_amount'    => $b->total_amount,
-                            'time_slots'      => $b->getTimeSlotsDisplay(),
-                            'package'         => $b->package?->name,
-                            'booking_date'    => $b->booking_date->format('M d, Y'),
-                            'end_date'        => $b->end_date->format('M d, Y'),
-                            'number_of_days'  => $b->number_of_days ?? 1,
-                        ];
-                    })->values();
-                }
-
-                $days[] = $dayData;
-                $current->addDay();
+        $slotStartHours = ['morning' => 8, 'afternoon' => 13, 'evening' => 18];
+        $todayPassedSlots = [];
+        foreach ($slotStartHours as $slot => $startHour) {
+            if (Carbon::now()->hour >= $startHour) {
+                $todayPassedSlots[] = $slot;
             }
-
-            // Occupancy stats
-            $totalVenues   = $venues->count();
-            $occupiedDays  = 0;
-            $totalDays     = count($days) * $totalVenues;
-            foreach ($days as $day) {
-                foreach ($day['venues'] as $vBookings) {
-                    if (count($vBookings) > 0) $occupiedDays++;
-                }
-            }
-
-            return response()->json([
-                'year'       => $year,
-                'month'      => $month,
-                'month_name' => $start->format('F Y'),
-                'prev'       => ['year' => $start->copy()->subMonth()->year, 'month' => $start->copy()->subMonth()->month],
-                'next'       => ['year' => $start->copy()->addMonth()->year, 'month' => $start->copy()->addMonth()->month],
-                'venues'     => $venues->map(fn($v) => ['id' => $v->id, 'name' => $v->name, 'type' => $v->type, 'capacity' => $v->capacity]),
-                'days'       => $days,
-                'stats'      => [
-                    'total_venues'    => $totalVenues,
-                    'occupied'        => $occupiedDays,
-                    'available'       => $totalDays - $occupiedDays,
-                    'occupancy_rate'  => $totalDays > 0 ? round(($occupiedDays / $totalDays) * 100, 1) : 0,
-                ],
-            ]);
         }
+
+        $days = [];
+        $current = $start->copy();
+        while ($current <= $end) {
+            $dateStr = $current->format('Y-m-d');
+            $isToday = $current->isToday();
+            $isPast = $current->isPast() && !$isToday;
+            $passedSlots = $isToday ? $todayPassedSlots : [];
+
+            $dayData = [
+                'date' => $dateStr,
+                'day' => $current->day,
+                'day_name' => $current->format('D'),
+                'is_today' => $isToday,
+                'is_past' => $isPast,
+                'is_weekend' => $current->isWeekend(),
+                'venues' => [],
+            ];
+
+            foreach ($venues as $venue) {
+                $dayBookings = $bookings->filter(function ($b) use ($venue, $dateStr) {
+                    return $b->venue_id === $venue->id
+                        && $b->booking_date->format('Y-m-d') <= $dateStr
+                        && $b->end_date->format('Y-m-d') >= $dateStr;
+                });
+
+                $dayData['venues'][$venue->id] = [
+                    'bookings' => $dayBookings->map(function ($b) {
+                        return [
+                            'id' => $b->id,
+                            'reference' => $b->booking_reference,
+                            'client_name' => $b->client_name,
+                            'client_email' => $b->client_email,
+                            'client_phone' => $b->client_phone,
+                            'status' => $b->status,
+                            'payment_status' => $b->payment_status,
+                            'total_amount' => $b->total_amount,
+                            'time_slots' => $b->getTimeSlotsDisplay(),
+                            'time_slots_raw' => $b->getTimeSlots(),
+                            'package' => $b->package?->name,
+                            'booking_date' => $b->booking_date->format('M d, Y'),
+                            'end_date' => $b->end_date->format('M d, Y'),
+                            'number_of_days' => $b->number_of_days ?? 1,
+                        ];
+                    })->values(),
+                    'availability' => $this->calculateVenueDayAvailability($venue, $dayBookings, $isPast, $passedSlots),
+                ];
+            }
+
+            $days[] = $dayData;
+            $current->addDay();
+        }
+
+        $totalVenues = $venues->count();
+        $occupiedDays = 0;
+        $partialDays = 0;
+        $totalDays = count($days) * $totalVenues;
+        foreach ($days as $day) {
+            foreach ($day['venues'] as $venueDay) {
+                if ($venueDay['availability']['status'] === 'partially-booked') {
+                    $partialDays++;
+                } elseif ($venueDay['availability']['status'] === 'fully-booked' || count($venueDay['bookings']) > 0) {
+                    $occupiedDays++;
+                }
+            }
+        }
+
+        return response()->json([
+            'year' => $year,
+            'month' => $month,
+            'month_name' => $start->format('F Y'),
+            'prev' => ['year' => $start->copy()->subMonth()->year, 'month' => $start->copy()->subMonth()->month],
+            'next' => ['year' => $start->copy()->addMonth()->year, 'month' => $start->copy()->addMonth()->month],
+            'venues' => $venues->map(fn ($v) => [
+                'id' => $v->id,
+                'name' => $v->name,
+                'type' => $v->type,
+                'capacity' => $v->capacity,
+                'room_number' => $v->room_number,
+            ]),
+            'days' => $days,
+            'stats' => [
+                'total_venues' => $totalVenues,
+                'occupied' => $occupiedDays,
+                'partial' => $partialDays,
+                'available' => $totalDays - $occupiedDays - $partialDays,
+                'occupancy_rate' => $totalDays > 0 ? round((($occupiedDays + $partialDays) / $totalDays) * 100, 1) : 0,
+            ],
+        ]);
+    }
+
+    private function calculateVenueDayAvailability(Venue $venue, $dayBookings, bool $isPast, array $passedSlots = []): array
+    {
+        if ($isPast) {
+            return [
+                'status' => 'past',
+                'can_book' => false,
+                'booked_slots' => [],
+                'available_slots' => [],
+            ];
+        }
+
+        if ($venue->type === 'suite') {
+            if ($dayBookings->isNotEmpty()) {
+                return [
+                    'status' => 'fully-booked',
+                    'can_book' => false,
+                    'booked_slots' => ['suite'],
+                    'available_slots' => [],
+                ];
+            }
+
+            return [
+                'status' => 'available',
+                'can_book' => true,
+                'booked_slots' => [],
+                'available_slots' => ['suite'],
+            ];
+        }
+
+        $bookedSlots = [];
+        foreach ($dayBookings as $booking) {
+            $slots = $booking->getTimeSlots();
+            if (empty($slots)) {
+                return [
+                    'status' => 'fully-booked',
+                    'can_book' => false,
+                    'booked_slots' => ['full-day'],
+                    'available_slots' => [],
+                ];
+            }
+
+            $bookedSlots = array_merge($bookedSlots, $slots);
+        }
+
+        $bookedSlots = array_values(array_unique($bookedSlots));
+        $allSlots = ['morning', 'afternoon', 'evening'];
+        $unavailableSlots = array_values(array_unique(array_merge($bookedSlots, $passedSlots)));
+        $availableSlots = array_values(array_diff($allSlots, $unavailableSlots));
+
+        if (empty($availableSlots)) {
+            return [
+                'status' => 'fully-booked',
+                'can_book' => false,
+                'booked_slots' => $bookedSlots,
+                'available_slots' => [],
+            ];
+        }
+
+        if (empty($bookedSlots)) {
+            return [
+                'status' => 'available',
+                'can_book' => true,
+                'booked_slots' => [],
+                'available_slots' => $availableSlots,
+            ];
+        }
+
+        return [
+            'status' => 'partially-booked',
+            'can_book' => true,
+            'booked_slots' => $bookedSlots,
+            'available_slots' => $availableSlots,
+        ];
+    }
 }

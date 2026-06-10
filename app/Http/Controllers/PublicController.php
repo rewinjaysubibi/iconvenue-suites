@@ -91,6 +91,20 @@ class PublicController extends Controller
             }
         }
         
+        // Determine which time slots can no longer be booked for TODAY based on current time.
+        // A slot is unavailable once its START time has passed:
+        //   morning   starts 8:00  → unavailable at hour >= 8
+        //   afternoon starts 13:00 → unavailable at hour >= 13
+        //   evening   starts 18:00 → unavailable at hour >= 18
+        $now = Carbon::now();
+        $slotStartHours = ['morning' => 8, 'afternoon' => 13, 'evening' => 18];
+        $todayPassedSlots = [];
+        foreach ($slotStartHours as $slot => $startHour) {
+            if ($now->hour >= $startHour) {
+                $todayPassedSlots[] = $slot;
+            }
+        }
+
         // Generate calendar data
         $calendarData = [];
         $currentDate = $startDate->copy();
@@ -98,15 +112,17 @@ class PublicController extends Controller
         while ($currentDate <= $endDate) {
             $dateStr = $currentDate->format('Y-m-d');
             $dayOfWeek = $currentDate->dayOfWeek; // 0 = Sunday, 6 = Saturday
+            $isToday = $currentDate->isToday();
             
             $dayData = [
                 'date' => $dateStr,
                 'day' => $currentDate->day,
                 'day_of_week' => $dayOfWeek,
                 'is_past' => $currentDate->isPast(),
-                'is_today' => $currentDate->isToday(),
+                'is_today' => $isToday,
+                'past_slots' => $isToday ? $todayPassedSlots : [],
                 'bookings' => $bookingsByDate[$dateStr] ?? [],
-                'availability' => $this->calculateDayAvailability($venue, $bookingsByDate[$dateStr] ?? [])
+                'availability' => $this->calculateDayAvailability($venue, $bookingsByDate[$dateStr] ?? [], $isToday ? $todayPassedSlots : [])
             ];
             
             $calendarData[] = $dayData;
@@ -136,26 +152,30 @@ class PublicController extends Controller
         ]);
     }
     
-    private function calculateDayAvailability($venue, $bookings)
+    private function calculateDayAvailability($venue, $bookings, array $passedSlots = [])
     {
-        if (empty($bookings)) {
-            return [
-                'status' => 'available',
-                'available_slots' => $venue->type === 'suite' ? ['suite'] : ['morning', 'afternoon', 'evening', 'full-day', 'package']
-            ];
-        }
-        
-        $bookedSlots = array_column($bookings, 'time_slot');
-        
-        // Check for full-day/suite bookings (these block everything)
-        if (in_array('full-day', $bookedSlots) || in_array('suite', $bookedSlots)) {
+        if ($venue->type === 'suite') {
+            // Suites support same-day walk-in booking when the suite is not already booked.
+            if (empty($bookings)) {
+                return [
+                    'status' => 'available',
+                    'available_slots' => ['suite']
+                ];
+            }
+
             return [
                 'status' => 'fully-booked',
                 'available_slots' => []
             ];
         }
-        
-        if ($venue->type === 'suite') {
+
+        $bookedSlots = array_column($bookings, 'time_slot');
+
+        // Merge booked + time-passed slots — both make a slot unavailable
+        $unavailableSlots = array_unique(array_merge($bookedSlots, $passedSlots));
+
+        // Check for full-day/suite bookings (these block everything)
+        if (in_array('full-day', $unavailableSlots) || in_array('suite', $unavailableSlots)) {
             return [
                 'status' => 'fully-booked',
                 'available_slots' => []
@@ -164,7 +184,7 @@ class PublicController extends Controller
         
         // For venues, check individual time slots.
         $allSlots = ['morning', 'afternoon', 'evening'];
-        $availableSlots = array_diff($allSlots, $bookedSlots);
+        $availableSlots = array_values(array_diff($allSlots, $unavailableSlots));
 
         if (empty($availableSlots)) {
             return [
@@ -173,8 +193,8 @@ class PublicController extends Controller
             ];
         }
 
-        // Full-day/package require a totally free day (no other bookings).
-        $bookedTimeSlots = array_intersect($bookedSlots, $allSlots);
+        // Full-day/package require ALL slots to be free (no bookings AND no passed slots)
+        $bookedTimeSlots = array_intersect($unavailableSlots, $allSlots);
         if (empty($bookedTimeSlots)) {
             $availableSlots[] = 'full-day';
             $availableSlots[] = 'package';

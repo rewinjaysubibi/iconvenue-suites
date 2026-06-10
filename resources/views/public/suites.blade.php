@@ -150,6 +150,14 @@
                         @endfor
                     </div>
                 </div>
+
+                @if($suite->room_number)
+                <div class="mb-3">
+                    <span class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">
+                        <i class="fas fa-door-open"></i>Room {{ $suite->room_number }}
+                    </span>
+                </div>
+                @endif
                 
                 <p class="text-gray-600 mb-4 leading-relaxed">{{ Str::limit($suite->description, 120) }}</p>
                 

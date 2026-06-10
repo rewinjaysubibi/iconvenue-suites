@@ -1,4 +1,4 @@
-﻿        <style>
+        <style>
         .venue-filter-tab.active {
             background-color: #8B5CF6;
             color: white;
@@ -41,6 +41,20 @@
 
         .addon-item.opacity-60 {
             cursor: not-allowed;
+        }
+
+        /* Smooth expand/collapse for quantity section — no scroll jump */
+        .addon-quantity {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding-top 0.3s ease, opacity 0.3s ease;
+            padding-top: 0;
+            opacity: 0;
+        }
+        .addon-quantity.expanded {
+            max-height: 200px;
+            padding-top: 0.75rem; /* pt-3 */
+            opacity: 1;
         }
 
         .quantity-btn {
@@ -199,12 +213,19 @@
             opacity: 1;
         }
         
+        #timeSlotField {
+            position: relative;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
         .time-slot-option {
             cursor: pointer;
             user-select: none;
             padding: 8px;
             border-radius: 6px;
             transition: background-color 0.2s ease;
+            pointer-events: auto;
         }
         
         .time-slot-option:hover {
@@ -231,6 +252,11 @@
             padding: 8px;
             border-radius: 6px;
             transition: background-color 0.2s ease;
+            pointer-events: auto;
+        }
+
+        .time-slot-checkbox-option * {
+            pointer-events: none;
         }
         
         .time-slot-checkbox-option:hover {

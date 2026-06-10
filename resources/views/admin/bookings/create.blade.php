@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('page-title', 'Create Booking')
 
@@ -8,6 +8,9 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div class="flex items-center justify-between">
             <div>
+                <a href="{{ route('admin.bookings.create') }}" class="inline-flex items-center text-sm text-purple-600 hover:text-purple-800 font-medium mb-2">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Calendar
+                </a>
                 <h1 class="text-2xl font-bold text-gray-900">Create New Booking</h1>
                 <p class="text-gray-600 mt-1">Fill in the details below to create a new venue or suite booking</p>
             </div>
@@ -190,6 +193,10 @@
                                         <i class="fas fa-info-circle mr-2 w-4"></i>
                                         <span>22-hour booking period</span>
                                     </div>
+                                    <div class="flex items-start">
+                                        <i class="fas fa-walking mr-2 w-4 mt-0.5"></i>
+                                        <span><strong>Walk-in:</strong> Same-day booking is allowed if the suite is available</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -365,7 +372,7 @@
                                 
                                 <!-- Quantity selector (hidden by default) -->
                                 @if(!$addon->isOutOfStock())
-                                    <div class="addon-quantity hidden pt-3 border-t border-gray-200">
+                                    <div class="addon-quantity border-t border-gray-200">
                                         <label class="block text-xs font-medium text-gray-700 mb-2">Quantity:</label>
                                         <div class="flex items-center space-x-3">
                                             <button type="button" class="quantity-btn quantity-minus w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-all duration-200">

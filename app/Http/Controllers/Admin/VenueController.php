@@ -87,6 +87,7 @@ class VenueController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'room_number' => 'nullable|string|max:50',
             'description' => 'required|string',
             'capacity' => 'required|integer|min:1',
             'price_per_day' => 'required|numeric|min:0',
@@ -142,6 +143,7 @@ class VenueController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'room_number' => 'nullable|string|max:50',
             'description' => 'required|string',
             'capacity' => 'required|integer|min:1',
             'price_per_day' => 'required|numeric|min:0',

@@ -171,6 +171,7 @@
                     <div class="text-sm text-blue-700 space-y-1">
                         <p><i class="fas fa-clock mr-2"></i><strong>Check-in:</strong> 2:00 PM</p>
                         <p><i class="fas fa-clock mr-2"></i><strong>Check-out:</strong> 12:00 PM (next day)</p>
+                        <p><i class="fas fa-walking mr-2"></i><strong>Walk-in:</strong> Same-day booking allowed if available</p>
                         <p><i class="fas fa-info-circle mr-2"></i>Standard 22-hour booking period</p>
                     </div>
                 </div>

@@ -144,30 +144,45 @@ class Booking extends Model
     }
 
     /**
+     * Format a single time slot with its time range.
+     */
+    public static function formatTimeSlotLabel(string $slot): string
+    {
+        return match (strtolower(trim($slot))) {
+            'morning' => 'Morning (8AM-12PM)',
+            'afternoon' => 'Afternoon (1PM-5PM)',
+            'evening' => 'Evening (6PM-10PM)',
+            default => ucfirst(trim($slot)),
+        };
+    }
+
+    /**
      * Get formatted time slots display
      */
     public function getTimeSlotsDisplay()
     {
-        if (!$this->time_slots || empty($this->time_slots)) {
+        $slots = $this->getTimeSlots();
+
+        if (empty($slots)) {
             return 'Full Day';
         }
 
-        $slots = [];
-        foreach ($this->time_slots as $slot) {
-            switch ($slot) {
-                case 'morning':
-                    $slots[] = 'Morning (8AM-12PM)';
-                    break;
-                case 'afternoon':
-                    $slots[] = 'Afternoon (1PM-5PM)';
-                    break;
-                case 'evening':
-                    $slots[] = 'Evening (6PM-10PM)';
-                    break;
-            }
+        return implode(' + ', array_map(
+            fn ($slot) => self::formatTimeSlotLabel($slot),
+            $slots
+        ));
+    }
+
+    /**
+     * Time slot label for reports and exports.
+     */
+    public function getReportTimeSlotDisplay(): string
+    {
+        if ($this->venue && $this->venue->type === 'suite') {
+            return 'Suite (22 hours)';
         }
 
-        return implode(' + ', $slots);
+        return $this->getTimeSlotsDisplay();
     }
 
     /**
@@ -175,7 +190,7 @@ class Booking extends Model
      */
     public function hasTimeSlot($slot)
     {
-        return $this->time_slots && in_array($slot, $this->time_slots);
+        return in_array(strtolower(trim((string) $slot)), $this->getTimeSlots(), true);
     }
 
     /**
@@ -183,7 +198,16 @@ class Booking extends Model
      */
     public function getTimeSlots()
     {
-        return $this->time_slots ?? [];
+        $slots = $this->time_slots ?? [];
+
+        if (is_string($slots)) {
+            $slots = [$slots];
+        }
+
+        return array_values(array_filter(array_map(
+            fn ($slot) => strtolower(trim((string) $slot)),
+            is_array($slots) ? $slots : []
+        )));
     }
 
     /**

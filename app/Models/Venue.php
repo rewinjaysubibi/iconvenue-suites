@@ -10,7 +10,7 @@ class Venue extends Model
     protected $table = 'venues_and_suites';
     
     protected $fillable = [
-        'name', 'type', 'description', 'capacity', 
+        'name', 'room_number', 'type', 'description', 'capacity',
         'price_per_day', 'price_morning', 'price_afternoon', 'price_evening',
         'amenities', 'images', 'is_active'
     ];
@@ -40,7 +40,7 @@ class Venue extends Model
         return $this->hasMany(VenuePackage::class)->where('is_active', true);
     }
 
-    public function isAvailable($startDate, $endDate, $excludeBookingId = null)
+    public function isAvailable($startDate, $endDate, $excludeBookingId = null, ?array $requestedTimeSlots = null)
     {
         $query = $this->bookings()
             ->where('status', '!=', 'cancelled')
@@ -57,6 +57,34 @@ class Venue extends Model
             $query->where('id', '!=', $excludeBookingId);
         }
 
-        return $query->count() === 0;
+        $existingBookings = $query->get();
+
+        if ($existingBookings->isEmpty()) {
+            return true;
+        }
+
+        // Suites occupy the full date range — any overlap blocks the booking.
+        if ($this->type === 'suite') {
+            return false;
+        }
+
+        $requestedTimeSlots = array_values(array_filter($requestedTimeSlots ?? []));
+        $isFullDayRequest = empty($requestedTimeSlots);
+
+        foreach ($existingBookings as $booking) {
+            $existingSlots = $booking->getTimeSlots();
+
+            // Full-day bookings (empty time_slots) block the entire day.
+            if (empty($existingSlots) || $isFullDayRequest) {
+                return false;
+            }
+
+            // Specific time slots only conflict when they overlap.
+            if (!empty(array_intersect($requestedTimeSlots, $existingSlots))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

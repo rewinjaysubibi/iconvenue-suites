@@ -1,16 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
-<nav class="gradient-bg shadow-lg">
+<nav style="background: linear-gradient(135deg, #1a0e05 0%, #2d1a08 100%); border-bottom: 1px solid rgba(201,168,76,0.4); position: relative;">
+    <!-- Top accent line -->
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#8b6914,#c9a84c,#f0d080,#c9a84c,#8b6914);"></div>
     <div class="container mx-auto px-4">
         <div class="flex justify-between items-center py-4">
             <a href="{{ route('home') }}" class="flex items-center space-x-3">
-                <img src="{{ asset('images/logo.jpg') }}" alt="Icon Venue & Suites" class="h-12 w-auto">
-                <span class="text-white text-2xl font-bold">Icon Venue & Suites</span>
+                <div style="background:linear-gradient(135deg,#c9a84c,#8b6914);padding:3px;border-radius:10px;">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="Icon Venue & Suites" class="h-10 w-10 rounded-lg object-cover">
+                </div>
+                <span class="text-2xl font-bold tracking-wider" style="color:#c9a84c;">Icon Venue & Suites</span>
             </a>
             <div class="space-x-6">
-                <a href="{{ route('home') }}" class="text-white hover:text-gray-200 transition">Home</a>
-                <a href="{{ route('contact') }}" class="text-white hover:text-gray-200 transition">Contact</a>
+                <a href="{{ route('home') }}" class="text-sm font-semibold tracking-widest uppercase transition-colors" style="color:#c9a84c;" onmouseover="this.style.color='#f0d080'" onmouseout="this.style.color='#c9a84c'">Home</a>
+                <a href="{{ route('contact') }}" class="text-sm font-semibold tracking-widest uppercase transition-colors" style="color:#c9a84c;" onmouseover="this.style.color='#f0d080'" onmouseout="this.style.color='#c9a84c'">Contact</a>
             </div>
         </div>
     </div>
