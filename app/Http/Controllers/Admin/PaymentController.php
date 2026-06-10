@@ -21,13 +21,19 @@ class PaymentController extends Controller
 
     public function create(Booking $booking)
     {
-        return view('admin.payments.create', compact('booking'));
+        $booking->load('payments');
+
+        $paidAmount = $booking->payments->where('status', 'verified')->sum('amount');
+        $balance = max(0, round((float) $booking->total_amount - (float) $paidAmount, 2));
+
+        return view('admin.payments.create', compact('booking', 'paidAmount', 'balance'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'booking_id' => 'required|exists:bookings,id',
+            'payment_type' => 'required|in:full,partial',
             'amount' => 'required|numeric|min:0.01',
             'payment_method' => 'nullable|string|max:255',
             'reference_number' => 'nullable|string|max:255',
@@ -39,6 +45,25 @@ class PaymentController extends Controller
             'proof_image.mimes' => 'Payment proof must be a JPEG, PNG, JPG, GIF, or WebP image.',
             'proof_image.max' => 'Payment proof image must not exceed 2MB.',
         ]);
+
+        $booking = Booking::with('payments')->findOrFail($validated['booking_id']);
+        $paidAmount = $booking->payments->where('status', 'verified')->sum('amount');
+        $balance = max(0, round((float) $booking->total_amount - (float) $paidAmount, 2));
+
+        if ($balance <= 0) {
+            return back()->withInput()
+                ->withErrors(['error' => 'This booking is already fully paid.']);
+        }
+
+        if ($validated['payment_type'] === 'full') {
+            if (round((float) $validated['amount'], 2) !== $balance) {
+                return back()->withInput()
+                    ->withErrors(['amount' => 'Full payment must equal the remaining balance of ₱' . number_format($balance, 2) . '.']);
+            }
+        } elseif (round((float) $validated['amount'], 2) > $balance) {
+            return back()->withInput()
+                ->withErrors(['amount' => 'Payment amount cannot exceed the remaining balance of ₱' . number_format($balance, 2) . '.']);
+        }
 
         try {
             if ($request->hasFile('proof_image')) {
@@ -56,9 +81,17 @@ class PaymentController extends Controller
                 if (file_exists($sourcePath) && !file_exists($publicPath)) copy($sourcePath, $publicPath);
             }
 
+            unset($validated['payment_type']);
             $validated['status'] = 'pending';
 
             $payment = Payment::create($validated);
+
+            if ($request->payment_type === 'full') {
+                $message = $this->verifyPayment($payment, true);
+
+                return redirect()->route('admin.bookings.show', $validated['booking_id'])
+                    ->with('success', $message);
+            }
 
             return redirect()->route('admin.bookings.show', $validated['booking_id'])
                 ->with('success', 'Payment record created successfully!');
@@ -73,6 +106,13 @@ class PaymentController extends Controller
 
     public function verify(Payment $payment)
     {
+        $message = $this->verifyPayment($payment, false);
+
+        return back()->with('success', $message);
+    }
+
+    protected function verifyPayment(Payment $payment, bool $fastTransaction = false): string
+    {
         $payment->update([
             'status' => 'verified',
             'verified_by' => auth()->id(),
@@ -83,31 +123,29 @@ class PaymentController extends Controller
         $totalPaid = $booking->payments()->where('status', 'verified')->sum('amount');
 
         if ($totalPaid >= $booking->total_amount) {
-            // Fully paid — confirm the booking automatically
             $booking->update([
                 'payment_status' => 'paid',
                 'status' => 'confirmed',
             ]);
         } else {
-            // Partial payment — keep pending, update payment status
             $booking->update(['payment_status' => 'partial']);
         }
 
-        // Load relationships for email
         $payment->load(['booking.venue', 'booking.package']);
 
-        // Send email notification to client
         try {
             Mail::to($payment->booking->client_email)->send(new PaymentStatusNotification($payment, 'verified'));
         } catch (\Exception $e) {
             \Log::error('Failed to send payment verified email: ' . $e->getMessage());
         }
 
-        $message = $totalPaid >= $booking->total_amount
+        if ($fastTransaction && $totalPaid >= $booking->total_amount) {
+            return 'Full payment recorded and verified! Booking has been confirmed.';
+        }
+
+        return $totalPaid >= $booking->total_amount
             ? 'Payment verified! Booking has been automatically confirmed.'
             : 'Payment verified! Booking remains pending until full payment is received.';
-
-        return back()->with('success', $message);
     }
 
     public function reject(Request $request, Payment $payment)

@@ -136,13 +136,13 @@ body {
 .bg-gray-100 { background: rgba(26,14,5,0.7) !important; }
 .bg-gray-200 { background: rgba(45,26,8,0.7) !important; }
 
-/* Text overrides */
-.text-gray-900 { color: #f5e6c8 !important; }
-.text-gray-800 { color: #e8d5a8 !important; }
-.text-gray-700 { color: #d4b87a !important; }
-.text-gray-600 { color: #b8954a !important; }
-.text-gray-500 { color: #8b6914 !important; }
-.text-gray-400 { color: #6b4f0f !important; }
+/* Text overrides — higher contrast for readability */
+.text-gray-900 { color: #fff8e7 !important; opacity: 1 !important; }
+.text-gray-800 { color: #f5e6c8 !important; opacity: 1 !important; }
+.text-gray-700 { color: #e8d5a8 !important; opacity: 1 !important; }
+.text-gray-600 { color: #d4b87a !important; opacity: 1 !important; }
+.text-gray-500 { color: #c9a84c !important; opacity: 1 !important; }
+.text-gray-400 { color: #b8954a !important; opacity: 1 !important; }
 
 /* Border overrides */
 .border-gray-200 { border-color: rgba(201,168,76,0.2) !important; }
@@ -152,29 +152,179 @@ body {
 /* Table rows */
 tbody tr:hover { background: rgba(201,168,76,0.05) !important; }
 thead.bg-gray-50 { background: rgba(45,26,8,0.95) !important; }
+th.text-gray-500,
+td.text-gray-600 {
+    color: #d4b87a !important;
+    opacity: 1 !important;
+}
 
-/* Form inputs */
+/* Form inputs — full opacity, high contrast */
 input[type="text"],
 input[type="email"],
 input[type="number"],
 input[type="password"],
 input[type="date"],
+input[type="time"],
+input[type="url"],
 input[type="tel"],
+input[type="search"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
 textarea,
 select {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(201,168,76,0.3) !important;
-    color: #f5e6c8 !important;
+    background: #1f1208 !important;
+    border: 1px solid rgba(201,168,76,0.55) !important;
+    color: #fff8e7 !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: #fff8e7 !important;
     border-radius: 0.5rem;
+    font-weight: 500;
 }
 
-input::placeholder, textarea::placeholder { color: #6b4f0f !important; }
-select option { background: #2d1a08; color: #f5e6c8; }
+input[type="number"] {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
 
-input:focus, textarea:focus, select:focus {
-    border-color: #c9a84c !important;
-    box-shadow: 0 0 0 2px rgba(201,168,76,0.2) !important;
+input::placeholder,
+textarea::placeholder {
+    color: #a67c2a !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: #a67c2a !important;
+}
+
+select option {
+    background: #2d1a08;
+    color: #fff8e7;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: #f0d080 !important;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.25) !important;
     outline: none;
+    background: #261508 !important;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+    background: rgba(26,14,5,0.85) !important;
+    color: #d4b87a !important;
+    -webkit-text-fill-color: #d4b87a !important;
+    opacity: 1 !important;
+}
+
+input[readonly],
+textarea[readonly] {
+    background: rgba(26,14,5,0.9) !important;
+    color: #f5e6c8 !important;
+    -webkit-text-fill-color: #f5e6c8 !important;
+    opacity: 1 !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+    -webkit-text-fill-color: #fff8e7 !important;
+    box-shadow: 0 0 0 1000px #1f1208 inset !important;
+    caret-color: #fff8e7 !important;
+    transition: background-color 9999s ease-out 0s;
+}
+
+/* Numbers, amounts, phones — readable everywhere */
+.tabular-nums,
+.font-mono {
+    font-variant-numeric: tabular-nums;
+    opacity: 1 !important;
+}
+
+label {
+    opacity: 1 !important;
+}
+
+/* Helper / hint text under form fields */
+.form-hint,
+p.text-sm.text-gray-500,
+p.text-xs.text-gray-500 {
+    color: #d4b87a !important;
+    opacity: 1 !important;
+}
+
+/* Tinted info boxes — keep text readable */
+.bg-blue-50   { background: rgba(59,130,246,0.14) !important; }
+.bg-indigo-50 { background: rgba(99,102,241,0.14) !important; }
+.bg-emerald-50 { background: rgba(16,185,129,0.14) !important; }
+.bg-green-50  { background: rgba(16,185,129,0.14) !important; }
+.bg-purple-50 { background: rgba(139,92,246,0.14) !important; }
+.bg-orange-50 { background: rgba(249,115,22,0.14) !important; }
+.bg-yellow-50 { background: rgba(234,179,8,0.14) !important; }
+.bg-red-50    { background: rgba(239,68,68,0.14) !important; }
+
+.text-blue-800,
+.text-blue-900    { color: #93c5fd !important; opacity: 1 !important; }
+.text-indigo-800,
+.text-indigo-900  { color: #a5b4fc !important; opacity: 1 !important; }
+.text-emerald-800,
+.text-emerald-900 { color: #6ee7b7 !important; opacity: 1 !important; }
+.text-green-600,
+.text-green-700   { color: #6ee7b7 !important; opacity: 1 !important; }
+.text-yellow-600  { color: #fde68a !important; opacity: 1 !important; }
+.text-red-600     { color: #fca5a5 !important; opacity: 1 !important; }
+
+.border-blue-200   { border-color: rgba(59,130,246,0.35) !important; }
+.border-indigo-200 { border-color: rgba(99,102,241,0.35) !important; }
+.border-emerald-200,
+.border-emerald-300 { border-color: rgba(16,185,129,0.4) !important; }
+.border-green-200  { border-color: rgba(16,185,129,0.35) !important; }
+.border-purple-200 { border-color: rgba(139,92,246,0.35) !important; }
+
+input[type="file"] {
+    color: #f5e6c8 !important;
+    opacity: 1 !important;
+}
+
+input[type="file"]::file-selector-button {
+    background: rgba(201,168,76,0.2) !important;
+    color: #fff8e7 !important;
+    border: 1px solid rgba(201,168,76,0.45) !important;
+    border-radius: 0.375rem;
+    padding: 0.35rem 0.75rem;
+    margin-right: 0.75rem;
+    font-weight: 600;
+    opacity: 1 !important;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: #c9a84c;
+    opacity: 1 !important;
+}
+
+/* Admin header on dark background */
+header .text-gray-500,
+header .text-gray-700 {
+    color: #d4b87a !important;
+    opacity: 1 !important;
+}
+
+/* Floating price widget */
+.floating-price-widget .text-purple-700,
+.floating-price-widget .text-purple-800,
+.floating-price-widget .text-purple-600 {
+    color: #f0d080 !important;
+    opacity: 1 !important;
+}
+
+.floating-price-widget #floatingDisplayPrice,
+.floating-price-widget #floatingTotalAmount {
+    color: #fff8e7 !important;
+    font-variant-numeric: tabular-nums;
+    opacity: 1 !important;
 }
 
 /* Buttons */

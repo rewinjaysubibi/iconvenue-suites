@@ -38,7 +38,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-600 text-sm">Total Bookings</p>
-                <p class="text-3xl font-bold text-blue-600">{{ $bookingStats['total'] }}</p>
+                <p class="text-3xl font-bold text-blue-600 tabular-nums">{{ number_format($bookingStats['total']) }}</p>
             </div>
             <i class="fas fa-calendar-check text-blue-600 text-4xl"></i>
         </div>
@@ -48,7 +48,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-600 text-sm">Confirmed</p>
-                <p class="text-3xl font-bold text-green-600">{{ $bookingStats['confirmed'] }}</p>
+                <p class="text-3xl font-bold text-green-600 tabular-nums">{{ number_format($bookingStats['confirmed']) }}</p>
             </div>
             <i class="fas fa-check-circle text-green-600 text-4xl"></i>
         </div>
@@ -58,7 +58,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-600 text-sm">Pending</p>
-                <p class="text-3xl font-bold text-yellow-600">{{ $bookingStats['pending'] }}</p>
+                <p class="text-3xl font-bold text-yellow-600 tabular-nums">{{ number_format($bookingStats['pending']) }}</p>
             </div>
             <i class="fas fa-clock text-yellow-600 text-4xl"></i>
         </div>
@@ -68,7 +68,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-600 text-sm">Cancelled</p>
-                <p class="text-3xl font-bold text-red-600">{{ $bookingStats['cancelled'] }}</p>
+                <p class="text-3xl font-bold text-red-600 tabular-nums">{{ number_format($bookingStats['cancelled']) }}</p>
             </div>
             <i class="fas fa-times-circle text-red-600 text-4xl"></i>
         </div>
@@ -80,43 +80,65 @@
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-xl font-bold mb-4 text-gray-800">Revenue Summary</h3>
         <div class="space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
+            <div class="flex justify-between items-center border-b pb-3 gap-4">
                 <span class="text-gray-600 font-medium">Total Verified Revenue</span>
-                <span class="text-2xl font-bold text-green-600">₱{{ number_format($revenueStats['total'], 2) }}</span>
+                <span class="text-2xl font-bold text-green-600 tabular-nums whitespace-nowrap">₱{{ number_format($revenueStats['total'], 2) }}</span>
             </div>
-            <div class="flex justify-between items-center border-b pb-3">
+            <div class="flex justify-between items-center border-b pb-3 gap-4">
                 <span class="text-gray-600 font-medium">Pending Payments</span>
-                <span class="text-xl font-bold text-yellow-600">₱{{ number_format($revenueStats['pending'], 2) }}</span>
+                <span class="text-xl font-bold text-yellow-600 tabular-nums whitespace-nowrap">₱{{ number_format($revenueStats['pending'], 2) }}</span>
             </div>
 
             {{-- Breakdown by payment method --}}
             @if($revenueStats['by_method']->count() > 0)
             <div class="pt-1">
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Breakdown by Payment Method</p>
-                <div class="space-y-2">
+                <div class="space-y-3">
                     @foreach($revenueStats['by_method'] as $item)
                     @php
                         $icons = [
-                            'gcash'        => ['icon' => 'fas fa-mobile-alt',   'color' => 'text-blue-500',   'bg' => 'bg-blue-50'],
-                            'maya'         => ['icon' => 'fas fa-wallet',        'color' => 'text-green-500',  'bg' => 'bg-green-50'],
-                            'cash'         => ['icon' => 'fas fa-money-bill',    'color' => 'text-emerald-600','bg' => 'bg-emerald-50'],
-                            'bank transfer'=> ['icon' => 'fas fa-university',    'color' => 'text-indigo-500', 'bg' => 'bg-indigo-50'],
-                            'credit card'  => ['icon' => 'fas fa-credit-card',   'color' => 'text-purple-500', 'bg' => 'bg-purple-50'],
-                            'check'        => ['icon' => 'fas fa-money-check',   'color' => 'text-orange-500', 'bg' => 'bg-orange-50'],
-                            'unspecified'  => ['icon' => 'fas fa-question-circle','color'=> 'text-gray-400',   'bg' => 'bg-gray-50'],
+                            'gcash'         => ['icon' => 'fas fa-mobile-alt',    'color' => 'text-blue-500',    'bg' => 'bg-blue-50',    'badge' => 'bg-blue-100 text-blue-800'],
+                            'paymaya'       => ['icon' => 'fas fa-wallet',         'color' => 'text-green-500',   'bg' => 'bg-green-50',   'badge' => 'bg-green-100 text-green-800'],
+                            'maya'          => ['icon' => 'fas fa-wallet',         'color' => 'text-green-500',   'bg' => 'bg-green-50',   'badge' => 'bg-green-100 text-green-800'],
+                            'cash'          => ['icon' => 'fas fa-money-bill-wave', 'color' => 'text-emerald-700', 'bg' => 'bg-emerald-50 border border-emerald-200', 'badge' => 'bg-emerald-600 text-white', 'total' => 'bg-white text-emerald-900 border border-emerald-300 shadow-sm'],
+                            'bank transfer' => ['icon' => 'fas fa-university',     'color' => 'text-indigo-500',  'bg' => 'bg-indigo-50',  'badge' => 'bg-indigo-100 text-indigo-800'],
+                            'credit card'   => ['icon' => 'fas fa-credit-card',    'color' => 'text-purple-500',  'bg' => 'bg-purple-50',  'badge' => 'bg-purple-100 text-purple-800'],
+                            'other'         => ['icon' => 'fas fa-receipt',        'color' => 'text-gray-500',    'bg' => 'bg-gray-50',    'badge' => 'bg-gray-100 text-gray-800'],
+                            'unspecified'   => ['icon' => 'fas fa-question-circle','color' => 'text-gray-400',    'bg' => 'bg-gray-50',    'badge' => 'bg-gray-100 text-gray-800'],
                         ];
                         $key = strtolower(trim($item->method));
-                        $style = $icons[$key] ?? ['icon' => 'fas fa-receipt', 'color' => 'text-gray-500', 'bg' => 'bg-gray-50'];
+                        $style = $icons[$key] ?? ['icon' => 'fas fa-receipt', 'color' => 'text-gray-500', 'bg' => 'bg-gray-50', 'badge' => 'bg-gray-100 text-gray-800', 'total' => 'text-gray-900'];
+                        $isCash = $key === 'cash';
                     @endphp
-                    <div class="flex items-center justify-between {{ $style['bg'] }} rounded-lg px-3 py-2">
-                        <div class="flex items-center gap-2">
-                            <i class="{{ $style['icon'] }} {{ $style['color'] }} w-4 text-center"></i>
-                            <div>
-                                <span class="text-sm font-semibold text-gray-700">{{ ucwords($item->method) }}</span>
-                                <span class="text-xs text-gray-400 ml-1">({{ $item->count }} payment{{ $item->count > 1 ? 's' : '' }})</span>
+                    <div class="{{ $style['bg'] }} rounded-lg px-3 py-3">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex items-start gap-2 min-w-0 flex-1">
+                                <i class="{{ $style['icon'] }} {{ $style['color'] }} w-4 text-center mt-1 flex-shrink-0"></i>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-bold {{ $style['badge'] }}">
+                                            @if($isCash)
+                                                <i class="fas fa-money-bill-wave mr-1"></i>Cash
+                                            @else
+                                                {{ ucwords($item->method) }}
+                                            @endif
+                                        </span>
+                                        <span class="text-xs text-gray-500">({{ number_format($item->count) }} payment{{ $item->count > 1 ? 's' : '' }})</span>
+                                    </div>
+                                    @if($item->clients->count() > 0)
+                                    <div class="mt-2 space-y-1">
+                                        @foreach($item->clients as $client)
+                                        <div class="flex items-center justify-between gap-3 text-xs">
+                                            <span class="{{ $isCash ? 'text-emerald-900' : 'text-gray-700' }} font-medium truncate opacity-100">{{ $client['name'] }}</span>
+                                            <span class="{{ $isCash ? 'text-emerald-900 font-bold bg-white px-1.5 py-0.5 rounded' : 'text-gray-700' }} tabular-nums whitespace-nowrap flex-shrink-0 opacity-100">₱{{ number_format($client['amount'], 2) }}</span>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                    @endif
+                                </div>
                             </div>
+                            <span class="text-base font-extrabold tabular-nums whitespace-nowrap flex-shrink-0 opacity-100 px-2.5 py-1 rounded-md {{ $style['total'] ?? 'text-gray-900' }}">₱{{ number_format($item->total, 2) }}</span>
                         </div>
-                        <span class="text-sm font-bold text-gray-800">₱{{ number_format($item->total, 2) }}</span>
                     </div>
                     @endforeach
                 </div>
@@ -173,6 +195,63 @@
     </div>
 </div>
 
+<!-- Verified Payments -->
+<div class="bg-white rounded-lg shadow mb-8">
+    <div class="p-6 border-b">
+        <h3 class="text-xl font-bold text-gray-800">Payment Records</h3>
+        <p class="text-sm text-gray-500 mt-1">Verified payments with client name and payment method</p>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Venue/Suite</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @forelse($verifiedPayments as $payment)
+                @php
+                    $methodKey = strtolower(trim($payment->payment_method ?: 'Unspecified'));
+                    $isCash = $methodKey === 'cash';
+                @endphp
+                <tr>
+                    <td class="px-6 py-4">
+                        <div class="font-semibold text-gray-800">{{ $payment->booking->client_name ?? 'Unknown' }}</div>
+                        <div class="text-xs text-gray-500 tabular-nums">{{ $payment->booking->client_phone ?? '' }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-gray-600">{{ $payment->booking->venue->name ?? 'N/A' }}</td>
+                    <td class="px-6 py-4">
+                        @if($isCash)
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                            <i class="fas fa-money-bill-wave mr-1"></i>Cash
+                        </span>
+                        @elseif($payment->payment_method)
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                            {{ $payment->payment_method }}
+                        </span>
+                        @else
+                        <span class="text-xs text-gray-400">Unspecified</span>
+                        @endif
+                    </td>
+                    <td class="px-6 py-4 text-right tabular-nums whitespace-nowrap">
+                        <span class="inline-block font-extrabold opacity-100 {{ $isCash ? 'text-emerald-900 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md' : 'text-gray-800' }}">₱{{ number_format($payment->amount, 2) }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-600 whitespace-nowrap">{{ $payment->created_at->format('M d, Y') }}</td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-600">No verified payments found for this period</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <!-- Recent Bookings Table -->
 <div class="bg-white rounded-lg shadow">
     <div class="p-6 border-b">
@@ -188,18 +267,27 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time Slot</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
                 @forelse($recentBookings as $booking)
+                @php
+                    $verifiedMethods = $booking->payments
+                        ->where('status', 'verified')
+                        ->pluck('payment_method')
+                        ->filter()
+                        ->unique()
+                        ->values();
+                @endphp
                 <tr>
-                    <td class="px-6 py-4 text-gray-600">#{{ $booking->id }}</td>
+                    <td class="px-6 py-4 text-gray-600 tabular-nums whitespace-nowrap">#{{ $booking->id }}</td>
                     <td class="px-6 py-4">
                         <div class="font-semibold text-gray-800">{{ $booking->client_name }}</div>
-                        <div class="text-sm text-gray-600">{{ $booking->client_phone }}</div>
+                        <div class="text-sm text-gray-600 tabular-nums whitespace-nowrap">{{ $booking->client_phone }}</div>
                     </td>
                     <td class="px-6 py-4 text-gray-600">{{ $booking->venue->name }}</td>
                     <td class="px-6 py-4">
@@ -211,9 +299,9 @@
                             {{ ucfirst($booking->venue->type) }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-gray-600">{{ $booking->booking_date->format('M d, Y') }}</td>
+                    <td class="px-6 py-4 text-gray-600 whitespace-nowrap">{{ $booking->booking_date->format('M d, Y') }}</td>
                     <td class="px-6 py-4 text-gray-600">{{ $booking->getReportTimeSlotDisplay() }}</td>
-                    <td class="px-6 py-4 text-gray-600">₱{{ number_format($booking->total_amount, 2) }}</td>
+                    <td class="px-6 py-4 text-right font-semibold text-gray-800 tabular-nums whitespace-nowrap">₱{{ number_format($booking->total_amount, 2) }}</td>
                     <td class="px-6 py-4">
                         <span class="px-3 py-1 rounded-full text-xs font-semibold
                             @if($booking->status == 'confirmed') bg-green-100 text-green-800
@@ -233,10 +321,30 @@
                             {{ ucfirst($booking->payment_status) }}
                         </span>
                     </td>
+                    <td class="px-6 py-4">
+                        @if($verifiedMethods->isEmpty())
+                        <span class="text-xs text-gray-400">—</span>
+                        @else
+                        <div class="flex flex-wrap gap-1">
+                            @foreach($verifiedMethods as $method)
+                            @php $isCash = strtolower(trim($method)) === 'cash'; @endphp
+                            @if($isCash)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                <i class="fas fa-money-bill-wave mr-1"></i>Cash
+                            </span>
+                            @else
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                {{ $method }}
+                            </span>
+                            @endif
+                            @endforeach
+                        </div>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="px-6 py-4 text-center text-gray-600">No bookings found for this period</td>
+                    <td colspan="10" class="px-6 py-4 text-center text-gray-600">No bookings found for this period</td>
                 </tr>
                 @endforelse
             </tbody>

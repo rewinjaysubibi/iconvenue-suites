@@ -75,10 +75,7 @@
                         <div class="relative">
                             <input type="email" name="email" value="{{ old('email') }}" required autofocus
                                 placeholder="Enter your email"
-                                class="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all duration-200 placeholder-gray-600"
-                                style="background: rgba(255,255,255,0.05); border: 1px solid rgba(201,168,76,0.3); color: #f5e6c8;"
-                                onfocus="this.style.borderColor='#c9a84c'; this.style.boxShadow='0 0 0 2px rgba(201,168,76,0.15)'"
-                                onblur="this.style.borderColor='rgba(201,168,76,0.3)'; this.style.boxShadow='none'">
+                                class="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all duration-200">
                         </div>
                     </div>
 
@@ -90,10 +87,7 @@
                         <div class="relative">
                             <input type="password" name="password" id="passwordInput" required
                                 placeholder="Enter your password"
-                                class="w-full px-4 py-3 pr-12 rounded-lg text-sm outline-none transition-all duration-200 placeholder-gray-600"
-                                style="background: rgba(255,255,255,0.05); border: 1px solid rgba(201,168,76,0.3); color: #f5e6c8;"
-                                onfocus="this.style.borderColor='#c9a84c'; this.style.boxShadow='0 0 0 2px rgba(201,168,76,0.15)'"
-                                onblur="this.style.borderColor='rgba(201,168,76,0.3)'; this.style.boxShadow='none'">
+                                class="w-full px-4 py-3 pr-12 rounded-lg text-sm outline-none transition-all duration-200">
                             <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" style="color: #8b6914;" onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#8b6914'">
                                 <i class="fas fa-eye text-sm" id="eyeIcon"></i>
                             </button>
@@ -105,7 +99,7 @@
                         <input type="checkbox" name="remember" id="remember"
                             class="w-4 h-4 rounded cursor-pointer"
                             style="accent-color: #c9a84c;">
-                        <label for="remember" class="text-xs cursor-pointer" style="color: #8b6914;">Keep me signed in</label>
+                        <label for="remember" class="text-xs cursor-pointer" style="color: #d4b87a;">Keep me signed in</label>
                     </div>
 
                     <!-- Submit -->

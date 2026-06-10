@@ -23,15 +23,28 @@ class ReportController extends Controller
             'cancelled' => Booking::whereBetween('created_at', [$startDate, $endDate])->where('status', 'cancelled')->count(),
         ];
 
+        $verifiedPayments = Payment::with(['booking.venue'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'verified')
+            ->orderByDesc('created_at')
+            ->get();
+
         $revenueStats = [
-            'total' => Payment::whereBetween('created_at', [$startDate, $endDate])->where('status', 'verified')->sum('amount'),
-            'pending' => Payment::whereBetween('created_at', [$startDate, $endDate])->where('status', 'pending')->sum('amount'),
-            'by_method' => Payment::whereBetween('created_at', [$startDate, $endDate])
-                ->where('status', 'verified')
-                ->selectRaw('COALESCE(NULLIF(payment_method, ""), "Unspecified") as method, SUM(amount) as total, COUNT(*) as count')
-                ->groupBy('method')
-                ->orderByDesc('total')
-                ->get(),
+            'total' => (float) $verifiedPayments->sum('amount'),
+            'pending' => (float) Payment::whereBetween('created_at', [$startDate, $endDate])->where('status', 'pending')->sum('amount'),
+            'by_method' => $verifiedPayments
+                ->groupBy(fn ($payment) => trim($payment->payment_method ?: 'Unspecified'))
+                ->map(fn ($payments, $method) => (object) [
+                    'method' => $method,
+                    'total' => (float) $payments->sum('amount'),
+                    'count' => $payments->count(),
+                    'clients' => $payments->map(fn ($payment) => [
+                        'name' => $payment->booking->client_name ?? 'Unknown',
+                        'amount' => (float) $payment->amount,
+                    ])->values(),
+                ])
+                ->sortByDesc('total')
+                ->values(),
         ];
 
         // Separate top venues and suites
@@ -51,12 +64,21 @@ class ReportController extends Controller
             ->take(5)
             ->get();
 
-        $recentBookings = Booking::with(['venue', 'staff'])
+        $recentBookings = Booking::with(['venue', 'staff', 'payments'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->latest()
             ->paginate(20);
 
-        return view('admin.reports.index', compact('bookingStats', 'revenueStats', 'topVenues', 'topSuites', 'recentBookings', 'startDate', 'endDate'));
+        return view('admin.reports.index', compact(
+            'bookingStats',
+            'revenueStats',
+            'verifiedPayments',
+            'topVenues',
+            'topSuites',
+            'recentBookings',
+            'startDate',
+            'endDate'
+        ));
     }
 
     public function export(Request $request)
@@ -99,6 +121,7 @@ class ReportController extends Controller
                 'Paid Amount',
                 'Balance',
                 'Payment Status',
+                'Payment Method(s)',
                 'Booking Status',
                 'Handled By',
                 'Created At',
@@ -112,6 +135,12 @@ class ReportController extends Controller
                 $duration = $booking->booking_date->diffInDays($booking->end_date) + 1;
                 
                 $timeSlot = $booking->getReportTimeSlotDisplay();
+                $paymentMethods = $booking->payments
+                    ->where('status', 'verified')
+                    ->pluck('payment_method')
+                    ->filter()
+                    ->unique()
+                    ->implode(', ');
 
                 fputcsv($file, [
                     $booking->id,
@@ -129,6 +158,7 @@ class ReportController extends Controller
                     number_format($paidAmount, 2, '.', ''),
                     number_format($balance, 2, '.', ''),
                     ucfirst($booking->payment_status),
+                    $paymentMethods ?: 'N/A',
                     ucfirst($booking->status),
                     $booking->staff->name ?? 'N/A',
                     $booking->created_at->format('Y-m-d H:i:s'),
