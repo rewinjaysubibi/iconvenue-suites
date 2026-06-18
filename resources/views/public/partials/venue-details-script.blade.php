@@ -4,76 +4,12 @@ let selectedPricing = null;
 let selectedAddons = {};
 let venueType = '{{ $venue->type }}';
 
-// ─── Time-slot expiry helpers ────────────────────────────────────────────────
-// Returns an array of slot names that can no longer be booked today.
-// A slot is unavailable once its START time has passed:
-//   morning   starts 8:00  → unavailable at hour >= 8
-//   afternoon starts 13:00 → unavailable at hour >= 13
-//   evening   starts 18:00 → unavailable at hour >= 18
-function getTodayPassedSlots() {
-    const hour = new Date().getHours();
-    const passed = [];
-    if (hour >= 8)  passed.push('morning');
-    if (hour >= 13) passed.push('afternoon');
-    if (hour >= 18) passed.push('evening');
-    return passed;
-}
-
 // Check whether a given date string (YYYY-MM-DD) is today in local time
 function isDateToday(dateStr) {
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
     return dateStr === todayStr;
 }
-
-// Apply "disabled" visual state to time-slot pricing cards for today
-function applyTodayDisabledSlots() {
-    if (venueType !== 'venue') return;
-    const passedSlots = getTodayPassedSlots();
-    ['morning', 'afternoon', 'evening'].forEach(slot => {
-        const card = document.querySelector(`.pricing-option[data-type="${slot}"]`);
-        if (!card) return;
-        const isPassed = passedSlots.includes(slot);
-        if (isPassed) {
-            card.classList.add('opacity-50', 'cursor-not-allowed');
-            card.dataset.timePassed = 'true';
-            // Add badge if not already there
-            if (!card.querySelector('.time-passed-badge')) {
-                const badge = document.createElement('div');
-                badge.className = 'time-passed-badge mt-2 text-xs font-semibold text-red-600 flex items-center gap-1';
-                badge.innerHTML = '<i class="fas fa-clock"></i> Time already passed';
-                card.appendChild(badge);
-            }
-        } else {
-            card.classList.remove('opacity-50', 'cursor-not-allowed');
-            delete card.dataset.timePassed;
-            const badge = card.querySelector('.time-passed-badge');
-            if (badge) badge.remove();
-        }
-    });
-
-    // If full-day option exists, disable it once morning has already started (hour >= 8)
-    const fullDayCard = document.querySelector('.pricing-option[data-type="full-day"]');
-    if (fullDayCard) {
-        const morningPassed = passedSlots.includes('morning'); // true once hour >= 8
-        if (morningPassed) {
-            fullDayCard.classList.add('opacity-50', 'cursor-not-allowed');
-            fullDayCard.dataset.timePassed = 'true';
-            if (!fullDayCard.querySelector('.time-passed-badge')) {
-                const badge = document.createElement('div');
-                badge.className = 'time-passed-badge mt-2 text-xs font-semibold text-red-600 flex items-center gap-1';
-                badge.innerHTML = '<i class="fas fa-clock"></i> Full day no longer available today';
-                fullDayCard.appendChild(badge);
-            }
-        } else {
-            fullDayCard.classList.remove('opacity-50', 'cursor-not-allowed');
-            delete fullDayCard.dataset.timePassed;
-            const badge = fullDayCard.querySelector('.time-passed-badge');
-            if (badge) badge.remove();
-        }
-    }
-}
-// ─────────────────────────────────────────────────────────────────────────────
 
 // Image Carousel Functions
 let carouselIntervals = {};
@@ -149,12 +85,6 @@ let selectedTimeSlots = {}; // { morning: price, afternoon: price, evening: pric
 
 // Pricing Selection Functions
 function selectPricingOption(element) {
-    // Block interaction if this slot's time has already passed today
-    if (element.dataset.timePassed === 'true') {
-        alert('This time slot has already passed for today. Please select a future time slot or choose a different date.');
-        return;
-    }
-
     const type = element.dataset.type;
     const timeSlotTypes = ['morning', 'afternoon', 'evening'];
 
@@ -299,15 +229,9 @@ function showPackageTimeSlots(packageElement) {
     const priceAfternoon = parseFloat(packageElement.dataset.priceAfternoon);
     const priceEvening = parseFloat(packageElement.dataset.priceEvening);
     const priceFullDay = parseFloat(packageElement.dataset.price);
-    const passedSlots = getTodayPassedSlots();
 
     function slotHtml(slotKey, price, colorFrom, colorTo, borderColor, hoverBorder, ring, icon, iconColor, label, timeLabel) {
-        const isPassed = passedSlots.includes(slotKey);
-        const disabledClass = isPassed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105';
-        const passedBadge = isPassed
-            ? `<div class="mt-2 text-xs font-semibold text-red-600 flex items-center gap-1"><i class="fas fa-clock"></i> Time already passed</div>`
-            : '';
-        return `<div class="time-slot-option bg-gradient-to-br ${colorFrom} ${colorTo} border-2 ${borderColor} rounded-xl p-4 ${disabledClass} ${isPassed ? '' : `hover:${hoverBorder}`} transition-all duration-300 transform" data-time-slot="${slotKey}" data-price="${price}" data-package-id="${packageId}" data-package-name="${packageName}" ${isPassed ? 'data-time-passed="true"' : ''}><div class="flex items-center mb-3"><div class="w-5 h-5 border-2 ${ring} rounded-full mr-3 flex items-center justify-center time-slot-radio"><div class="w-2.5 h-2.5 ${iconColor} rounded-full opacity-0 transition-opacity duration-200"></div></div><i class="fas ${icon} ${iconColor} text-xl mr-2"></i><h5 class="font-semibold text-gray-800">${label}</h5></div><p class="text-sm text-gray-600 mb-2">${timeLabel}</p><div class="text-2xl font-bold ${iconColor}">₱${price.toLocaleString()}</div>${passedBadge}</div>`;
+        return `<div class="time-slot-option bg-gradient-to-br ${colorFrom} ${colorTo} border-2 ${borderColor} rounded-xl p-4 cursor-pointer hover:scale-105 hover:${hoverBorder} transition-all duration-300 transform" data-time-slot="${slotKey}" data-price="${price}" data-package-id="${packageId}" data-package-name="${packageName}"><div class="flex items-center mb-3"><div class="w-5 h-5 border-2 ${ring} rounded-full mr-3 flex items-center justify-center time-slot-radio"><div class="w-2.5 h-2.5 ${iconColor} rounded-full opacity-0 transition-opacity duration-200"></div></div><i class="fas ${icon} ${iconColor} text-xl mr-2"></i><h5 class="font-semibold text-gray-800">${label}</h5></div><p class="text-sm text-gray-600 mb-2">${timeLabel}</p><div class="text-2xl font-bold ${iconColor}">₱${price.toLocaleString()}</div></div>`;
     }
 
     let html = '';
@@ -321,13 +245,7 @@ function showPackageTimeSlots(packageElement) {
         html += slotHtml('evening', priceEvening, 'from-indigo-50', 'to-purple-50', 'border-indigo-200', 'border-indigo-400', 'border-indigo-400', 'fa-moon', 'text-indigo-600', 'Evening', '6:00 PM - 10:00 PM');
     }
 
-    // Full day: disabled if morning has already started (can't do full day partway through)
-    const fullDayDisabled2 = passedSlots.includes('morning');
-    const fullDayPassedBadge = fullDayDisabled2
-        ? `<div class="mt-2 text-xs font-semibold text-red-600 flex items-center gap-1"><i class="fas fa-clock"></i> Full day no longer available today</div>`
-        : '';
-    const fullDayDisabled = fullDayDisabled2 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-purple-400 hover:scale-105';
-    html += `<div class="time-slot-option bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-4 ${fullDayDisabled} transition-all duration-300 transform" data-time-slot="full-day" data-price="${priceFullDay}" data-package-id="${packageId}" data-package-name="${packageName}" ${fullDayDisabled2 ? 'data-time-passed="true"' : ''}><div class="flex items-center mb-3"><div class="w-5 h-5 border-2 border-purple-400 rounded-full mr-3 flex items-center justify-center time-slot-radio"><div class="w-2.5 h-2.5 bg-purple-600 rounded-full opacity-0 transition-opacity duration-200"></div></div><i class="fas fa-calendar-day text-purple-600 text-xl mr-2"></i><h5 class="font-semibold text-gray-800">Full Day</h5></div><p class="text-sm text-gray-600 mb-2">Complete access</p><div class="text-2xl font-bold text-purple-600">₱${priceFullDay.toLocaleString()}</div>${fullDayPassedBadge}</div>`;
+    html += `<div class="time-slot-option bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-4 cursor-pointer hover:border-purple-400 hover:scale-105 transition-all duration-300 transform" data-time-slot="full-day" data-price="${priceFullDay}" data-package-id="${packageId}" data-package-name="${packageName}"><div class="flex items-center mb-3"><div class="w-5 h-5 border-2 border-purple-400 rounded-full mr-3 flex items-center justify-center time-slot-radio"><div class="w-2.5 h-2.5 bg-purple-600 rounded-full opacity-0 transition-opacity duration-200"></div></div><i class="fas fa-calendar-day text-purple-600 text-xl mr-2"></i><h5 class="font-semibold text-gray-800">Full Day</h5></div><p class="text-sm text-gray-600 mb-2">Complete access</p><div class="text-2xl font-bold text-purple-600">₱${priceFullDay.toLocaleString()}</div></div>`;
 
     timeSlotOptions.innerHTML = html;
     timeSlotSection.classList.remove('hidden');
@@ -338,11 +256,6 @@ function showPackageTimeSlots(packageElement) {
 }
 
 function selectTimeSlot(element) {
-    // Block if this slot's time has already passed today
-    if (element.dataset.timePassed === 'true') {
-        alert('This time slot has already passed for today. Please select a future time slot or choose a different date.');
-        return;
-    }
     document.querySelectorAll('.time-slot-option').forEach(option => {
         option.classList.remove('selected', 'ring-4', 'ring-blue-300', 'ring-orange-300', 'ring-indigo-300', 'ring-purple-300');
         const radio = option.querySelector('.time-slot-radio div');
@@ -563,9 +476,6 @@ function stopAutoSlide(carouselId) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Disable time slot cards that have already passed today
-    applyTodayDisabledSlots();
-
     document.querySelectorAll('.pricing-option').forEach(option => {
         option.addEventListener('click', function() { selectPricingOption(this); });
     });
@@ -629,12 +539,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (day.availability.status === 'fully-booked') { bgClass = 'bg-red-50'; textClass = 'text-red-700'; }
             if (day.is_today) cellClass += ' ring-2 ring-blue-500';
 
-            // For today, show how many slots have passed due to time
-            const passedSlotsNotice = (day.is_today && day.past_slots && day.past_slots.length > 0)
-                ? `<div class="mt-1 text-xs text-orange-600 flex items-center gap-1"><i class="fas fa-clock text-xs"></i>${day.past_slots.length} slot${day.past_slots.length > 1 ? 's' : ''} passed</div>`
-                : '';
-
-            html += `<div class="${cellClass} ${bgClass}" ${isClickable ? `onclick="showDateDetails('${day.date}')"` : ''}><div class="flex justify-between items-start mb-2"><span class="font-semibold ${textClass}">${day.day}</span>${day.is_today ? '<span class="text-xs bg-blue-500 text-white px-1 rounded">Today</span>' : ''}</div>${hasBookings ? `<div class="space-y-1">${day.bookings.slice(0, 2).map(b => `<div class="text-xs p-1 rounded ${getBookingColor(b.time_slot)} truncate">${getTimeSlotLabel(b.time_slot)}</div>`).join('')}${day.bookings.length > 2 ? `<div class="text-xs text-gray-500">+${day.bookings.length - 2} more</div>` : ''}</div>` : ''}${passedSlotsNotice}${!day.is_past && day.availability.status === 'available' ? '<div class="absolute bottom-1 right-1"><i class="fas fa-check-circle text-green-500 text-sm"></i></div>' : ''}</div>`;
+            html += `<div class="${cellClass} ${bgClass}" ${isClickable ? `onclick="showDateDetails('${day.date}')"` : ''}><div class="flex justify-between items-start mb-2"><span class="font-semibold ${textClass}">${day.day}</span>${day.is_today ? '<span class="text-xs bg-blue-500 text-white px-1 rounded">Today</span>' : ''}</div>${hasBookings ? `<div class="space-y-1">${day.bookings.slice(0, 2).map(b => `<div class="text-xs p-1 rounded ${getBookingColor(b.time_slot)} truncate">${getTimeSlotLabel(b.time_slot)}</div>`).join('')}${day.bookings.length > 2 ? `<div class="text-xs text-gray-500">+${day.bookings.length - 2} more</div>` : ''}</div>` : ''}${!day.is_past && day.availability.status === 'available' ? '<div class="absolute bottom-1 right-1"><i class="fas fa-check-circle text-green-500 text-sm"></i></div>' : ''}</div>`;
         });
         grid.innerHTML = html;
     }
@@ -664,27 +569,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const contentDiv = document.getElementById('selectedDateContent');
         let html = `<div class="mb-3"><h6 class="font-semibold text-blue-900">${new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h6></div>`;
 
-        // Show passed-time notice for today
-        const pastSlots = dayData.past_slots || [];
-        if (dayData.is_today && pastSlots.length > 0) {
-            const slotLabels = { morning: 'Morning (8AM–12PM)', afternoon: 'Afternoon (1PM–5PM)', evening: 'Evening (6PM–10PM)' };
-            const passedLabels = pastSlots.map(s => slotLabels[s] || s).join(', ');
-            html += `<div class="mb-3 p-2 bg-orange-50 border border-orange-200 rounded text-sm text-orange-800"><i class="fas fa-clock mr-1"></i><strong>Time already passed today:</strong> ${passedLabels}</div>`;
-        }
-
         if (dayData.bookings.length > 0) {
             html += `<div class="mb-4"><h6 class="font-medium text-blue-800 mb-2">Existing Bookings:</h6><div class="space-y-2">${dayData.bookings.map(booking => `<div class="flex items-center justify-between p-2 bg-white rounded border"><div><span class="font-medium">${getTimeSlotLabel(booking.time_slot)}</span>${booking.package_name ? `<span class="text-sm text-gray-600"> - ${booking.package_name}</span>` : ''}</div><span class="text-xs px-2 py-1 rounded ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${booking.status}</span></div>`).join('')}</div></div>`;
         }
         if (dayData.availability.available_slots.length > 0) {
             html += `<div class="mb-4"><h6 class="font-medium text-green-800 mb-2">Available Options:</h6><div class="flex flex-wrap gap-2">${dayData.availability.available_slots.map(slot => `<span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">${getTimeSlotLabel(slot)}</span>`).join('')}</div></div>`;
         } else if (!dayData.is_past) {
-            const reason = (dayData.is_today && pastSlots.length >= 3)
-                ? 'All time slots have passed for today.'
-                : 'No time slots available for this date.';
-            html += `<div class="mb-4"><div class="p-3 bg-red-100 border border-red-200 rounded"><p class="text-red-800 font-medium">No Slots Available</p><p class="text-red-600 text-sm">${reason}</p></div></div>`;
+            html += `<div class="mb-4"><div class="p-3 bg-red-100 border border-red-200 rounded"><p class="text-red-800 font-medium">No Slots Available</p><p class="text-red-600 text-sm">All time slots are fully booked for this date.</p></div></div>`;
         }
         if (!dayData.is_past && selectedPricing) {
-            // Determine if the selected slot type is available (accounting for passed time)
             const availableSlots = dayData.availability.available_slots;
             const slotType = selectedPricing.type;
             const isTimeSlot = ['morning', 'afternoon', 'evening'].includes(slotType);
@@ -702,22 +595,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 canBook = availableSlots.includes(slotType) ||
                     (['full-day', 'package', 'suite'].includes(slotType) && dayData.availability.status === 'available');
             }
-
-            // Extra check: if today, is the selected slot already past?
-            if (canBook && dayData.is_today && isTimeSlot && pastSlots.includes(slotType)) {
-                canBook = false;
-            }
-            if (canBook && dayData.is_today && isMultiple && selectedPricing.timeSlot) {
-                const individualSlots = selectedPricing.timeSlot.split(',');
-                if (individualSlots.some(s => pastSlots.includes(s))) canBook = false;
-            }
-            if (canBook && dayData.is_today && (slotType === 'full-day' || slotType === 'package') && pastSlots.length >= 3) {
-                canBook = false;
-            }
-
             html += canBook
                 ? `<div class="mt-4 p-3 bg-green-50 border border-green-200 rounded"><p class="text-green-800 font-medium mb-2"><i class="fas fa-check-circle mr-2"></i>${selectedPricing.name} is available!</p><button onclick="proceedWithBooking('${date}')" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"><i class="fas fa-calendar-check mr-2"></i>Book for this Date</button></div>`
-                : `<div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded"><p class="text-yellow-800 font-medium"><i class="fas fa-exclamation-triangle mr-2"></i>${selectedPricing.name} is not available for this date${dayData.is_today && pastSlots.length > 0 ? ' — time slot has passed' : ''}</p></div>`;
+                : `<div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded"><p class="text-yellow-800 font-medium"><i class="fas fa-exclamation-triangle mr-2"></i>${selectedPricing.name} is not available for this date</p></div>`;
         }
         contentDiv.innerHTML = html;
         infoDiv.classList.remove('hidden');

@@ -91,19 +91,10 @@ class PublicController extends Controller
             }
         }
         
-        // Determine which time slots can no longer be booked for TODAY based on current time.
-        // A slot is unavailable once its START time has passed:
-        //   morning   starts 8:00  → unavailable at hour >= 8
-        //   afternoon starts 13:00 → unavailable at hour >= 13
-        //   evening   starts 18:00 → unavailable at hour >= 18
-        $now = Carbon::now();
-        $slotStartHours = ['morning' => 8, 'afternoon' => 13, 'evening' => 18];
-        $todayPassedSlots = [];
-        foreach ($slotStartHours as $slot => $startHour) {
-            if ($now->hour >= $startHour) {
-                $todayPassedSlots[] = $slot;
-            }
-        }
+        // For the public calendar, we do NOT block slots based on time-of-day.
+        // The calendar is purely for visualization — clients can see which slots
+        // are already booked, but past-time slots are not artificially blocked.
+        $todayPassedSlots = []; // intentionally empty for public view
 
         // Generate calendar data
         $calendarData = [];

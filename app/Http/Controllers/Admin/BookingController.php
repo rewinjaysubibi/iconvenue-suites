@@ -631,7 +631,7 @@ class BookingController extends Controller
             foreach ($day['venues'] as $venueDay) {
                 if ($venueDay['availability']['status'] === 'partially-booked') {
                     $partialDays++;
-                } elseif ($venueDay['availability']['status'] === 'fully-booked' || count($venueDay['bookings']) > 0) {
+                } elseif ($venueDay['availability']['status'] === 'fully-booked') {
                     $occupiedDays++;
                 }
             }
@@ -711,6 +711,16 @@ class BookingController extends Controller
         $availableSlots = array_values(array_diff($allSlots, $unavailableSlots));
 
         if (empty($availableSlots)) {
+            // If there are no actual bookings, all slots are just time-expired — not truly "fully booked"
+            if (empty($bookedSlots)) {
+                return [
+                    'status' => 'time-passed',
+                    'can_book' => false,
+                    'booked_slots' => [],
+                    'available_slots' => [],
+                ];
+            }
+
             return [
                 'status' => 'fully-booked',
                 'can_book' => false,
