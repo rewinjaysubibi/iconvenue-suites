@@ -261,137 +261,145 @@ class PublicController extends Controller
     {
         try {
             $request->validate([
-                'venue_id' => 'required|exists:venues,id',
-                'event_date' => 'required|date|after_or_equal:today',
+                'venue_id'     => 'required|exists:venues_and_suites,id',
+                'event_date'   => 'required|date|after_or_equal:today',
                 'pricing_type' => 'required|string',
                 'pricing_name' => 'required|string',
-                'package_id' => 'nullable|exists:venue_packages,id'
+                'package_id'   => 'nullable|exists:venue_packages,id',
             ]);
 
-            $venue = Venue::findOrFail($request->venue_id);
-            $eventDate = $request->event_date;
+            $venue      = Venue::findOrFail($request->venue_id);
+            $eventDate  = $request->event_date;
             $pricingType = $request->pricing_type;
-            
-            // Get existing bookings for this venue on the requested date
+
+            // Label map for display
+            $slotLabels = [
+                'morning'   => 'Morning (8:00 AM – 12:00 PM)',
+                'afternoon' => 'Afternoon (1:00 PM – 5:00 PM)',
+                'evening'   => 'Evening (6:00 PM – 10:00 PM)',
+                'full-day'  => 'Full Day',
+                'suite'     => 'Suite Booking',
+                'package'   => 'Event Package',
+            ];
+
+            // ── Collect already-booked slots for this date ────────────────────
             $existingBookings = Booking::where('venue_id', $venue->id)
                 ->where('status', '!=', 'cancelled')
                 ->where('booking_date', $eventDate)
                 ->get();
-            
-            // Define time slots
-            $timeSlots = [
-                'morning' => 'Morning (8:00 AM - 12:00 PM)',
-                'afternoon' => 'Afternoon (1:00 PM - 5:00 PM)', 
-                'evening' => 'Evening (6:00 PM - 10:00 PM)',
-                'full-day' => 'Full Day',
-                'suite' => 'Suite Booking',
-                'package' => 'Event Package'
-            ];
-            
-            // Check availability based on booking logic
-            $isAvailable = true;
-            $conflictingBookings = [];
-            $availableSlots = [];
-            $existingBookedSlots = [];
-            $hasAllDayBlock = false;
+
+            $bookedSlots   = [];   // specific slots that are taken
+            $hasFullDayBlock = false; // true when a full-day / suite booking exists
 
             foreach ($existingBookings as $booking) {
                 if ($venue->type === 'suite') {
-                    $hasAllDayBlock = true;
-                    $existingBookedSlots[] = 'suite';
+                    $hasFullDayBlock = true;
                     continue;
                 }
 
                 $slots = $booking->getTimeSlots();
                 if (empty($slots)) {
-                    $hasAllDayBlock = true;
-                    $existingBookedSlots[] = 'full-day';
-                    continue;
-                }
-
-                foreach ($slots as $slot) {
-                    if (in_array($slot, ['morning', 'afternoon', 'evening'], true)) {
-                        $existingBookedSlots[] = $slot;
-                    }
-                }
-            }
-            $existingBookedSlots = array_values(array_unique($existingBookedSlots));
-            
-            // If requesting full day, check if ANY booking exists for that date
-            if ($pricingType === 'full-day') {
-                if ($existingBookings->count() > 0) {
-                    $isAvailable = false;
-                    foreach ($existingBookings as $booking) {
-                        $conflictingBookings[] = $booking->getTimeSlotsDisplay() . ' - ' . $booking->client_name;
-                    }
+                    // Empty time_slots means full-day — blocks everything
+                    $hasFullDayBlock = true;
                 } else {
-                    $availableSlots = ['Full Day Available'];
-                }
-            }
-            // If requesting suite booking, check if ANY booking exists for that date
-            elseif ($pricingType === 'suite') {
-                if ($existingBookings->count() > 0) {
-                    $isAvailable = false;
-                    foreach ($existingBookings as $booking) {
-                        $conflictingBookings[] = $booking->getTimeSlotsDisplay() . ' - ' . $booking->client_name;
-                    }
-                } else {
-                    $availableSlots = ['Suite Available'];
-                }
-            }
-            // If requesting package, treat like full day
-            elseif ($pricingType === 'package') {
-                if ($existingBookings->count() > 0) {
-                    $isAvailable = false;
-                    foreach ($existingBookings as $booking) {
-                        $conflictingBookings[] = $booking->getTimeSlotsDisplay() . ' - ' . $booking->client_name;
-                    }
-                } else {
-                    $availableSlots = ['Package Booking Available'];
-                }
-            }
-            // If requesting specific time slot (morning/afternoon/evening)
-            else {
-                if ($hasAllDayBlock) {
-                    $isAvailable = false;
-                    foreach ($existingBookings as $booking) {
-                        $conflictingBookings[] = $booking->getTimeSlotsDisplay() . ' - ' . $booking->client_name;
-                    }
-                } else {
-                    if (in_array($pricingType, $existingBookedSlots, true)) {
-                        $isAvailable = false;
-                        $slotName = $timeSlots[$pricingType] ?? $pricingType;
-                        $conflictingBookings[] = $slotName . ' - Already booked';
-                    }
-                    
-                    // Show available time slots
-                    $allTimeSlots = ['morning', 'afternoon', 'evening'];
-                    foreach ($allTimeSlots as $slot) {
-                        if (!in_array($slot, $existingBookedSlots, true)) {
-                            $availableSlots[] = $timeSlots[$slot];
+                    foreach ($slots as $slot) {
+                        if (in_array($slot, ['morning', 'afternoon', 'evening'], true)) {
+                            $bookedSlots[] = $slot;
                         }
                     }
                 }
             }
-            
-            // Calculate estimated cost (this would be more complex in real implementation)
+            $bookedSlots = array_values(array_unique($bookedSlots));
+
+            // All three specific slots booked also constitutes a full-day block for venues
+            $allTimeSlots = ['morning', 'afternoon', 'evening'];
+            if (!$hasFullDayBlock && count(array_intersect($allTimeSlots, $bookedSlots)) === 3) {
+                $hasFullDayBlock = true;
+            }
+
+            // ── Remaining available specific slots ────────────────────────────
+            $remainingSlots = array_values(array_diff($allTimeSlots, $bookedSlots));
+
+            // ── Determine availability for the requested pricing type ─────────
+            $isAvailable       = true;
+            $conflictingBookings = [];
+            $availableSlots    = [];
+
+            if ($pricingType === 'suite') {
+                // Suites: any existing booking blocks the whole day
+                if ($existingBookings->isNotEmpty()) {
+                    $isAvailable = false;
+                    foreach ($existingBookings as $b) {
+                        $conflictingBookings[] = $b->getTimeSlotsDisplay() . ' – ' . $b->client_name;
+                    }
+                } else {
+                    $availableSlots = ['Suite Available'];
+                }
+
+            } elseif (in_array($pricingType, ['full-day', 'package'], true)) {
+                // Full-day / package: requires ALL three slots to be free
+                if ($hasFullDayBlock || !empty($bookedSlots)) {
+                    $isAvailable = false;
+                    foreach ($existingBookings as $b) {
+                        $conflictingBookings[] = $b->getTimeSlotsDisplay() . ' – ' . $b->client_name;
+                    }
+                    // Let the user know which slots are still open
+                    foreach ($remainingSlots as $slot) {
+                        $availableSlots[] = $slotLabels[$slot] ?? ucfirst($slot);
+                    }
+                } else {
+                    $availableSlots = [$pricingType === 'package' ? 'Package Booking Available' : 'Full Day Available'];
+                }
+
+            } else {
+                // Specific time slot (morning / afternoon / evening)
+                if ($hasFullDayBlock) {
+                    // A full-day booking blocks every individual slot
+                    $isAvailable = false;
+                    foreach ($existingBookings as $b) {
+                        $conflictingBookings[] = $b->getTimeSlotsDisplay() . ' – ' . $b->client_name;
+                    }
+                } elseif (in_array($pricingType, $bookedSlots, true)) {
+                    // The exact requested slot is already taken
+                    $isAvailable = false;
+                    $conflictingBookings[] = ($slotLabels[$pricingType] ?? ucfirst($pricingType)) . ' – Already booked';
+                }
+
+                // Always show the remaining open slots
+                foreach ($remainingSlots as $slot) {
+                    if ($slot !== $pricingType) { // don't double-list the requested slot
+                        $availableSlots[] = $slotLabels[$slot] ?? ucfirst($slot);
+                    }
+                }
+                if ($isAvailable) {
+                    // Confirm the requested slot is free
+                    array_unshift($availableSlots, ($slotLabels[$pricingType] ?? ucfirst($pricingType)) . ' – Available');
+                }
+            }
+
             $estimatedCost = $this->calculateEstimatedCost($venue, $pricingType, $request->package_id);
 
             return response()->json([
-                'available' => $isAvailable,
-                'event_date' => $eventDate,
-                'pricing_type' => $pricingType,
-                'estimated_cost' => $estimatedCost,
+                'available'           => $isAvailable,
+                'event_date'          => $eventDate,
+                'pricing_type'        => $pricingType,
+                'estimated_cost'      => $estimatedCost,
                 'conflicting_bookings' => $conflictingBookings,
-                'available_slots' => $availableSlots,
-                'message' => $isAvailable 
-                    ? "Great! {$request->pricing_name} is available for your selected date." 
-                    : "Sorry, {$request->pricing_name} is not available for the selected date."
+                'available_slots'     => $availableSlots,
+                'message'             => $isAvailable
+                    ? "Great! {$request->pricing_name} is available for your selected date."
+                    : "Sorry, {$request->pricing_name} is not available for the selected date.",
             ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'available' => false,
+                'message'   => 'Validation error: ' . implode(' ', array_merge(...array_values($e->errors()))),
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'available' => false,
-                'message' => 'Error checking availability: ' . $e->getMessage()
+                'message'   => 'Error checking availability: ' . $e->getMessage(),
             ], 500);
         }
     }

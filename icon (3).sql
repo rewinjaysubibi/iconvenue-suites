@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 31, 2026 at 03:07 AM
+-- Generation Time: Jun 17, 2026 at 04:37 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -40,6 +40,7 @@ CREATE TABLE `bookings` (
   `number_of_days` int(11) NOT NULL DEFAULT 1,
   `end_date` date NOT NULL,
   `time_slots` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`time_slots`)),
+  `time_slot_times` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`time_slot_times`)),
   `total_amount` decimal(10,2) NOT NULL,
   `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `discount_percentage` decimal(5,2) DEFAULT NULL,
@@ -58,8 +59,13 @@ CREATE TABLE `bookings` (
 -- Dumping data for table `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `booking_reference`, `venue_id`, `package_id`, `staff_id`, `client_name`, `client_email`, `client_phone`, `booking_date`, `number_of_days`, `end_date`, `time_slots`, `total_amount`, `discount_amount`, `discount_percentage`, `discount_reason`, `original_amount`, `status`, `payment_status`, `notes`, `reminder_sent_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(27, 'IVS-2026-IAWP', 15, NULL, 1, 'rewin jay', 'subibirewinjay@gmail.com', '09123456798', '2026-06-01', 1, '2026-06-01', NULL, 50000.01, 0.00, NULL, NULL, 50000.01, 'confirmed', 'paid', NULL, NULL, '2026-05-30 23:56:46', '2026-05-30 23:57:15', NULL);
+INSERT INTO `bookings` (`id`, `booking_reference`, `venue_id`, `package_id`, `staff_id`, `client_name`, `client_email`, `client_phone`, `booking_date`, `number_of_days`, `end_date`, `time_slots`, `time_slot_times`, `total_amount`, `discount_amount`, `discount_percentage`, `discount_reason`, `original_amount`, `status`, `payment_status`, `notes`, `reminder_sent_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(27, 'IVS-2026-IAWP', 15, NULL, 1, 'rewin jay', 'subibirewinjay@gmail.com', '09123456798', '2026-06-01', 1, '2026-06-01', NULL, NULL, 50000.01, 0.00, NULL, NULL, 50000.01, 'completed', 'paid', NULL, NULL, '2026-05-30 23:56:46', '2026-06-09 13:19:15', NULL),
+(28, 'IVS-2026-RTK1', 16, NULL, 1, 'rewin jay', 'subibirewinjay@gmail.com', '09123456798', '2026-06-10', 1, '2026-06-10', '[\"morning\"]', NULL, 7000.00, 0.00, NULL, NULL, 7000.00, 'cancelled', 'unpaid', NULL, NULL, '2026-06-10 00:07:30', '2026-06-10 00:11:25', '2026-06-10 00:11:25'),
+(29, 'IVS-2026-EYJN', 16, NULL, 1, 'rewin jay', 'subibirewinjay@gmail.com', '09123456798', '2026-06-10', 1, '2026-06-10', '[\"afternoon\"]', NULL, 7000.00, 0.00, NULL, NULL, 7000.00, 'pending', 'unpaid', NULL, NULL, '2026-06-10 00:46:01', '2026-06-10 00:46:01', NULL),
+(30, 'IVS-2026-3ZW8', 16, NULL, 1, 'rewin jay', 'subibirewinjay@gmail.com', '09123456798', '2026-06-10', 1, '2026-06-10', '[\"evening\"]', NULL, 7000.00, 0.00, NULL, NULL, 7000.00, 'pending', 'unpaid', NULL, NULL, '2026-06-10 00:57:29', '2026-06-10 00:57:29', NULL),
+(31, 'IVS-2026-JHUM', 15, NULL, 1, 'jay', 'subibirewinjay@gmail.com', '09537967052', '2026-06-10', 1, '2026-06-10', '[\"afternoon\"]', NULL, 16666.67, 0.00, NULL, NULL, 16666.67, 'pending', 'unpaid', NULL, NULL, '2026-06-10 01:11:53', '2026-06-10 01:11:53', NULL),
+(32, 'IVS-2026-Z95F', 15, NULL, 1, 'jereniah', 'subibirewinjay@gmail.com', '09537967052', '2026-06-10', 1, '2026-06-10', '[\"evening\"]', NULL, 16666.67, 0.00, NULL, NULL, 16666.67, 'confirmed', 'paid', NULL, NULL, '2026-06-10 01:15:25', '2026-06-10 01:24:59', NULL);
 
 -- --------------------------------------------------------
 
@@ -94,7 +100,8 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('icon-venue-suites-cache-bookings_auto_complete_last_run', 'b:1;', 1780189476);
+('icon-venue-suites-cache-bookings_auto_complete_last_run', 'b:1;', 1781055774),
+('venue-and-suites-booking-cache-bookings_auto_complete_last_run', 'b:1;', 1781011905);
 
 -- --------------------------------------------------------
 
@@ -247,7 +254,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (26, '2026_01_27_001923_add_time_based_pricing_to_venue_packages_table', 13),
 (27, '2026_01_27_010840_update_time_slot_to_support_multiple_selections', 13),
 (28, '2026_02_11_005918_add_allow_same_day_booking_to_venues_and_suites_table', 13),
-(29, '2026_03_12_165636_add_number_of_days_to_bookings_table', 13);
+(29, '2026_03_12_165636_add_number_of_days_to_bookings_table', 13),
+(30, '2026_06_10_081412_add_room_number_to_venues_and_suites_table', 14),
+(31, '2026_06_10_093113_add_time_slot_times_to_bookings_table', 15);
 
 -- --------------------------------------------------------
 
@@ -288,7 +297,8 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`id`, `booking_id`, `verified_by`, `amount`, `payment_method`, `reference_number`, `proof_image`, `status`, `notes`, `verified_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(24, 27, 1, 50000.10, 'Cash', 'cash', NULL, 'verified', 'sdadsa', '2026-05-30 23:57:15', '2026-05-30 23:57:11', '2026-05-30 23:57:15', NULL);
+(24, 27, 1, 50000.10, 'Cash', 'cash', NULL, 'verified', 'sdadsa', '2026-05-30 23:57:15', '2026-05-30 23:57:11', '2026-05-30 23:57:15', NULL),
+(25, 32, 1, 16666.67, 'Cash', 'cash', NULL, 'verified', 'cash', '2026-06-10 01:24:59', '2026-06-10 01:24:59', '2026-06-10 01:24:59', NULL);
 
 -- --------------------------------------------------------
 
@@ -360,7 +370,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `profile_image`, `role_id`, `is_active`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Admin', 'admin@iconvenue.com', NULL, 1, 1, NULL, '$2y$12$zNJF5FzVRwN4nSpDLrySqelYid71yWX9vlyU57WIGEpYArr7nAx62', NULL, '2026-01-15 19:03:34', '2026-01-18 09:20:48'),
+(1, 'Admin', 'admin@iconvenue.com', 'profiles/uSrzXHoEryqeh0rojgD0oMXk7APiWhSEWSWikZNU.jpg', 1, 1, NULL, '$2y$12$zNJF5FzVRwN4nSpDLrySqelYid71yWX9vlyU57WIGEpYArr7nAx62', NULL, '2026-01-15 19:03:34', '2026-06-10 01:16:04'),
 (2, 'pogi', 'staff@iconvenue.com', NULL, 2, 1, NULL, '$2y$12$TljFIRfoFAUp/osHI/a05uEDRx96GbQcBq0Vrw2ia3AjG0zQ4qpZa', NULL, '2026-01-15 19:03:34', '2026-01-18 09:45:51');
 
 -- --------------------------------------------------------
@@ -372,6 +382,7 @@ INSERT INTO `users` (`id`, `name`, `email`, `profile_image`, `role_id`, `is_acti
 CREATE TABLE `venues_and_suites` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
+  `room_number` varchar(50) DEFAULT NULL,
   `type` varchar(255) NOT NULL DEFAULT 'venue',
   `description` text NOT NULL,
   `capacity` int(11) NOT NULL,
@@ -390,15 +401,15 @@ CREATE TABLE `venues_and_suites` (
 -- Dumping data for table `venues_and_suites`
 --
 
-INSERT INTO `venues_and_suites` (`id`, `name`, `type`, `description`, `capacity`, `price_per_day`, `price_morning`, `price_afternoon`, `price_evening`, `amenities`, `images`, `is_active`, `created_at`, `updated_at`) VALUES
-(10, 'Standard Single', 'suite', 'Cancellation policy\r\nCancel for free before May 20, 2026\r\n\r\nStay flexible! Cancel for free 2 days before the booking. ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy).', 1, 1126.00, NULL, NULL, NULL, '[\"Featured amenities\",\"17 m\\u00b2\\/183 ft\\u00b2\",\"1 single bed\",\"Comforts\",\"Air conditioning\",\"One Single Bed\",\"WiFi\",\"Breakfast Included\"]', '[\"suites\\/1779067735_6a0a6b57eba75.jpg\"]', 1, '2026-05-18 00:44:19', '2026-05-18 01:28:55'),
-(11, 'Standard Room', 'suite', 'Cancellation policy\r\nNon-refundable (Low price!)\r\n\r\nThis special offer includes an extra-low price, but cannot be amended or cancelled. In case of a no-show, the property will not refund the booking. If you\'re sure of your travel dates, you can take advantage of this special offer!\r\n\r\nCancellation policy\r\nNon-refundable (Low price!)', 2, 1613.00, NULL, NULL, NULL, '[\"Wifi\",\"Breakfast Included\",\"No Windows view\",\"Private bathroom\",\"Walk-in shower\",\"Towels\",\"Toiletries\",\"TV\",\"Free instant coffee\",\"Laptop workspace\",\"Top floor available\",\"Non-smoking\"]', '[\"suites\\/1779065233_6a0a6191a4e10.webp\"]', 1, '2026-05-18 00:47:13', '2026-05-18 01:03:47'),
-(12, 'Deluxe Room', 'suite', 'Cancellation policy\r\nCancel for free 2 days before the Booking\r\n\r\nStay flexible! Cancel for free before May 20, 2026 ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy).', 2, 2169.00, NULL, NULL, NULL, '[\"Wifi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066188_6a0a654c20c90.webp\"]', 1, '2026-05-18 01:03:08', '2026-05-18 01:04:04'),
-(13, 'Triple Room', 'suite', 'Cancellation policy\r\nNon-refundable (Low price!)\r\n\r\nThis special offer includes an extra-low price, but cannot be amended or cancelled. In case of a no-show, the property will not refund the booking. If you\'re sure of your travel dates, you can take advantage of this special offer!', 3, 2150.00, NULL, NULL, NULL, '[\"WiFi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066340_6a0a65e4404a0.webp\"]', 1, '2026-05-18 01:05:40', '2026-05-18 01:05:40'),
-(14, 'Family Room', 'suite', 'Cancellation policy\r\nCancel for free 2 days before the booking\r\n\r\nStay flexible! Cancel for free before May 20, 2026 ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy)', 4, 3298.00, NULL, NULL, NULL, '[\"WiFi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066466_6a0a66621e6e2.webp\",\"suites\\/1779066466_6a0a666220b02.webp\",\"suites\\/1779066466_6a0a6662210b1.webp\",\"suites\\/1779066466_6a0a6662216ad.jpg\"]', 1, '2026-05-18 01:07:46', '2026-05-18 01:07:46'),
-(15, 'Platinum', 'venue', 'Platinum Venue', 50, 50000.00, 16666.67, 16666.67, 16666.67, '[\"Food\",\"Catering\",\"For 4 hours using of function hall\"]', '[\"venues\\/1779066873_6a0a67f949891.jpg\"]', 1, '2026-05-18 01:14:33', '2026-05-18 01:26:41'),
-(16, 'VIP Room', 'venue', 'vip room', 15, 21000.00, 7000.00, 7000.00, 7000.00, '[\"Food\",\"Catering\",\"Projector\"]', '[\"venues\\/1779067504_6a0a6a70d5ff9.jpg\"]', 1, '2026-05-18 01:21:39', '2026-05-18 01:25:04'),
-(17, 'Diamond', 'venue', 'Diamond', 50, 54000.00, 18000.00, 18000.00, 18000.00, '[]', '[\"venues\\/1779067363_6a0a69e33d38f.jpg\"]', 1, '2026-05-18 01:22:43', '2026-05-18 01:22:43');
+INSERT INTO `venues_and_suites` (`id`, `name`, `room_number`, `type`, `description`, `capacity`, `price_per_day`, `price_morning`, `price_afternoon`, `price_evening`, `amenities`, `images`, `is_active`, `created_at`, `updated_at`) VALUES
+(10, 'Standard Single', '5', 'suite', 'Cancellation policy\r\nCancel for free before May 20, 2026\r\n\r\nStay flexible! Cancel for free 2 days before the booking. ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy).', 1, 1126.00, NULL, NULL, NULL, '[\"Featured amenities\",\"17 m\\u00b2\\/183 ft\\u00b2\",\"1 single bed\",\"Comforts\",\"Air conditioning\",\"One Single Bed\",\"WiFi\",\"Breakfast Included\"]', '[\"suites\\/1779067735_6a0a6b57eba75.jpg\"]', 1, '2026-05-18 00:44:19', '2026-06-10 00:23:24'),
+(11, 'Standard Room', '4', 'suite', 'Cancellation policy\r\nNon-refundable (Low price!)\r\n\r\nThis special offer includes an extra-low price, but cannot be amended or cancelled. In case of a no-show, the property will not refund the booking. If you\'re sure of your travel dates, you can take advantage of this special offer!\r\n\r\nCancellation policy\r\nNon-refundable (Low price!)', 2, 1613.00, NULL, NULL, NULL, '[\"Wifi\",\"Breakfast Included\",\"No Windows view\",\"Private bathroom\",\"Walk-in shower\",\"Towels\",\"Toiletries\",\"TV\",\"Free instant coffee\",\"Laptop workspace\",\"Top floor available\",\"Non-smoking\"]', '[\"suites\\/1779065233_6a0a6191a4e10.webp\"]', 1, '2026-05-18 00:47:13', '2026-06-10 00:23:18'),
+(12, 'Deluxe Room', '3', 'suite', 'Cancellation policy\r\nCancel for free 2 days before the Booking\r\n\r\nStay flexible! Cancel for free before May 20, 2026 ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy).', 2, 2169.00, NULL, NULL, NULL, '[\"Wifi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066188_6a0a654c20c90.webp\"]', 1, '2026-05-18 01:03:08', '2026-06-10 00:23:12'),
+(13, 'Triple Room', '2', 'suite', 'Cancellation policy\r\nNon-refundable (Low price!)\r\n\r\nThis special offer includes an extra-low price, but cannot be amended or cancelled. In case of a no-show, the property will not refund the booking. If you\'re sure of your travel dates, you can take advantage of this special offer!', 3, 2150.00, NULL, NULL, NULL, '[\"WiFi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066340_6a0a65e4404a0.webp\"]', 1, '2026-05-18 01:05:40', '2026-06-10 00:23:07'),
+(14, 'Family Room', '1', 'suite', 'Cancellation policy\r\nCancel for free 2 days before the booking\r\n\r\nStay flexible! Cancel for free before May 20, 2026 ​Any cancellation received within 7 days prior to the arrival date will be charged for the entire stay. Failure to arrive at your hotel or property will be treated as a No-Show and will incur a charge of 100% of the booking value (Hotel policy)', 4, 3298.00, NULL, NULL, NULL, '[\"WiFi\",\"Breakfast Included\",\"Private bathroom\",\"Towels\",\"TV\",\"Air conditioning\",\"Desk\",\"Non-smoking\",\"Safety\\/security feature\"]', '[\"suites\\/1779066466_6a0a66621e6e2.webp\",\"suites\\/1779066466_6a0a666220b02.webp\",\"suites\\/1779066466_6a0a6662210b1.webp\",\"suites\\/1779066466_6a0a6662216ad.jpg\"]', 1, '2026-05-18 01:07:46', '2026-06-10 00:21:34'),
+(15, 'Platinum', NULL, 'venue', 'Platinum Venue', 50, 50000.00, 16666.67, 16666.67, 16666.67, '[\"Food\",\"Catering\",\"For 4 hours using of function hall\"]', '[\"venues\\/1779066873_6a0a67f949891.jpg\"]', 1, '2026-05-18 01:14:33', '2026-05-18 01:26:41'),
+(16, 'VIP Room', NULL, 'venue', 'vip room', 15, 21000.00, 7000.00, 7000.00, 7000.00, '[\"Food\",\"Catering\",\"Projector\"]', '[\"venues\\/1779067504_6a0a6a70d5ff9.jpg\"]', 1, '2026-05-18 01:21:39', '2026-05-18 01:25:04'),
+(17, 'Diamond', NULL, 'venue', 'Diamond', 50, 54000.00, 18000.00, 18000.00, 18000.00, '[]', '[\"venues\\/1779067363_6a0a69e33d38f.jpg\"]', 1, '2026-05-18 01:22:43', '2026-05-18 01:22:43');
 
 -- --------------------------------------------------------
 
@@ -602,7 +613,7 @@ ALTER TABLE `venue_packages`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `booking_addons`
@@ -638,13 +649,13 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `roles`
