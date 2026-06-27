@@ -30,37 +30,37 @@
             </div>
 
             <div>
-                <label class="block text-gray-700 font-semibold mb-2">Price per Day *</label>
+                <label class="block text-gray-700 font-semibold mb-2">Full Day Price *</label>
                 <input type="number" name="price_per_day" id="price_per_day" value="{{ old('price_per_day', $venue->price_per_day) }}" required min="0" step="0.01"
                     class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    placeholder="Enter total price or fill time slots below">
-                <p class="text-xs text-gray-500 mt-1" id="pricePerDayNote">Enter a total price to auto-split into time slots, or fill the time slots manually below.</p>
+                    placeholder="0.00">
+                <p class="text-xs text-gray-500 mt-1" id="pricePerDayNote">Price for a full-day rental. This is separate from time-slot pricing below.</p>
             </div>
         </div>
 
         <div class="mt-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Time-Based Pricing (Optional)</h3>
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Time-Based Pricing</h3>
             <p class="text-sm text-gray-600 mb-4" id="timePricingNote">For venues only. Suites use standard 22-hour booking (Check-in: 2PM, Check-out: 12PM)</p>
             <div class="grid md:grid-cols-3 gap-6" id="timePricingFields" style="{{ $venue->type == 'suite' ? 'display: none;' : '' }}">
                 <div>
-                    <label class="block text-gray-700 font-semibold mb-2">Morning (8AM - 12PM)</label>
+                    <label class="block text-gray-700 font-semibold mb-2">Morning (8AM - 12PM) *</label>
                     <input type="number" name="price_morning" id="price_morning" value="{{ old('price_morning', $venue->price_morning) }}" min="0" step="0.01"
                         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Optional">
+                        placeholder="0.00" {{ $venue->type == 'venue' ? 'required' : '' }}>
                 </div>
 
                 <div>
-                    <label class="block text-gray-700 font-semibold mb-2">Afternoon (1PM - 5PM)</label>
+                    <label class="block text-gray-700 font-semibold mb-2">Afternoon (1PM - 5PM) *</label>
                     <input type="number" name="price_afternoon" id="price_afternoon" value="{{ old('price_afternoon', $venue->price_afternoon) }}" min="0" step="0.01"
                         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Optional">
+                        placeholder="0.00" {{ $venue->type == 'venue' ? 'required' : '' }}>
                 </div>
 
                 <div>
-                    <label class="block text-gray-700 font-semibold mb-2">Evening (6PM - 10PM)</label>
+                    <label class="block text-gray-700 font-semibold mb-2">Evening (6PM - 10PM) *</label>
                     <input type="number" name="price_evening" id="price_evening" value="{{ old('price_evening', $venue->price_evening) }}" min="0" step="0.01"
                         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Optional">
+                        placeholder="0.00" {{ $venue->type == 'venue' ? 'required' : '' }}>
                 </div>
             </div>
         </div>
@@ -130,65 +130,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const nameLabel = document.getElementById('nameLabel');
     const timePricingFields = document.getElementById('timePricingFields');
     const timePricingNote = document.getElementById('timePricingNote');
-    const pricePerDay = document.getElementById('price_per_day');
-    const priceMorning = document.getElementById('price_morning');
-    const priceAfternoon = document.getElementById('price_afternoon');
-    const priceEvening = document.getElementById('price_evening');
-    
-    function calculateTotalPrice() {
-        if (typeSelect.value === 'venue') {
-            const morning = parseFloat(priceMorning.value) || 0;
-            const afternoon = parseFloat(priceAfternoon.value) || 0;
-            const evening = parseFloat(priceEvening.value) || 0;
-            pricePerDay.value = (morning + afternoon + evening).toFixed(2);
-        }
-    }
+    const timeSlotInputs = document.querySelectorAll('#timePricingFields input');
 
-    function distributeToSlots() {
-        if (typeSelect.value === 'venue') {
-            const total = parseFloat(pricePerDay.value) || 0;
-            if (total > 0) {
-                const perSlot = (total / 3).toFixed(2);
-                priceMorning.value = perSlot;
-                priceAfternoon.value = perSlot;
-                priceEvening.value = perSlot;
-            }
-        }
-    }
-    
     function updateFormBasedOnType() {
         if (typeSelect.value === 'suite') {
             nameLabel.textContent = 'Suite Name *';
             timePricingFields.style.display = 'none';
             timePricingNote.textContent = 'Suites use standard 22-hour booking (Check-in: 2PM, Check-out: 12PM next day)';
-            document.querySelectorAll('#timePricingFields input').forEach(input => input.value = '');
-            pricePerDay.readOnly = false;
-            pricePerDay.classList.remove('bg-gray-100', 'text-gray-600');
+            timeSlotInputs.forEach(input => {
+                input.value = '';
+                input.removeAttribute('required');
+            });
         } else {
             nameLabel.textContent = 'Venue Name *';
             timePricingFields.style.display = 'grid';
-            timePricingNote.textContent = 'Enter a total price above to auto-split into time slots, or fill the time slots manually.';
-            pricePerDay.readOnly = false;
-            pricePerDay.classList.remove('bg-gray-100', 'text-gray-600');
-            calculateTotalPrice();
+            timePricingNote.textContent = 'Set prices for each time slot. These are independent from the full day price above.';
+            timeSlotInputs.forEach(input => input.setAttribute('required', 'required'));
         }
     }
     
     typeSelect.addEventListener('change', updateFormBasedOnType);
-    updateFormBasedOnType(); // Run on page load
-    
-    // Add event listeners to time-based pricing fields for auto-calculation
-    if (priceMorning) priceMorning.addEventListener('input', calculateTotalPrice);
-    if (priceAfternoon) priceAfternoon.addEventListener('input', calculateTotalPrice);
-    if (priceEvening) priceEvening.addEventListener('input', calculateTotalPrice);
-
-    // Distribute total price to slots when price_per_day is typed
-    if (pricePerDay) pricePerDay.addEventListener('input', distributeToSlots);
-    
-    // Calculate on page load if it's a venue
-    if (typeSelect.value === 'venue') {
-        calculateTotalPrice();
-    }
+    updateFormBasedOnType();
 });
 
 function removeImage(venueId, imagePath, button) {

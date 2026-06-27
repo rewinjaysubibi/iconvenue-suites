@@ -208,6 +208,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Venue/Suite</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference No.</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                 </tr>
@@ -237,6 +238,9 @@
                         <span class="text-xs text-gray-400">Unspecified</span>
                         @endif
                     </td>
+                    <td class="px-6 py-4 text-gray-600 font-mono text-sm">
+                        {{ $payment->reference_number ?: '—' }}
+                    </td>
                     <td class="px-6 py-4 text-right tabular-nums whitespace-nowrap">
                         <span class="inline-block font-extrabold opacity-100 {{ $isCash ? 'text-emerald-900 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md' : 'text-gray-800' }}">₱{{ number_format($payment->amount, 2) }}</span>
                     </td>
@@ -244,7 +248,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-6 py-4 text-center text-gray-600">No verified payments found for this period</td>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-600">No verified payments found for this period</td>
                 </tr>
                 @endforelse
             </tbody>

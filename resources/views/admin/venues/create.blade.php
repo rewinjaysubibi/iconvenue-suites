@@ -28,42 +28,42 @@
             </div>
 
             <div>
-                <label class="block text-gray-700 font-semibold mb-2">Price per Day *</label>
+                <label class="block text-gray-700 font-semibold mb-2">Full Day Price *</label>
                 <input type="number" name="price_per_day" id="price_per_day" value="{{ old('price_per_day') }}" required min="0" step="0.01"
                     class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    placeholder="Enter total price or fill time slots below">
-                <p class="text-xs text-gray-500 mt-1">Enter a total price to auto-split into time slots, or fill the time slots manually below.</p>
+                    placeholder="0.00">
+                <p class="text-xs text-gray-500 mt-1">Price for a full-day rental. This is separate from time-slot pricing below.</p>
             </div>
         </div>
 
         <div class="mt-6">
             <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
                 <h3 class="text-lg font-bold text-purple-800 mb-2">
-                    <i class="fas fa-clock mr-2"></i>Time-Based Pricing (Optional)
+                    <i class="fas fa-clock mr-2"></i>Time-Based Pricing
                 </h3>
                 <p class="text-purple-700">
-                    Set different prices for specific time slots, or enter a total price above to auto-divide equally across all 3 slots.
+                    Set prices for each time slot. These are independent from the full day price above.
                 </p>
             </div>
             
             <div class="grid md:grid-cols-3 gap-6">
                 <div>
                     <label class="block text-gray-700 font-semibold mb-2">Morning (8AM - 12PM) *</label>
-                    <input type="number" name="price_morning" id="price_morning" value="{{ old('price_morning', 0) }}" min="0" step="0.01" required
+                    <input type="number" name="price_morning" id="price_morning" value="{{ old('price_morning') }}" min="0" step="0.01" required
                         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                         placeholder="0.00">
                 </div>
 
                 <div>
                     <label class="block text-gray-700 font-semibold mb-2">Afternoon (1PM - 5PM) *</label>
-                    <input type="number" name="price_afternoon" id="price_afternoon" value="{{ old('price_afternoon', 0) }}" min="0" step="0.01" required
+                    <input type="number" name="price_afternoon" id="price_afternoon" value="{{ old('price_afternoon') }}" min="0" step="0.01" required
                         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                         placeholder="0.00">
                 </div>
 
                 <div>
                     <label class="block text-gray-700 font-semibold mb-2">Evening (6PM - 10PM) *</label>
-                    <input type="number" name="price_evening" id="price_evening" value="{{ old('price_evening', 0) }}" min="0" step="0.01" required
+                    <input type="number" name="price_evening" id="price_evening" value="{{ old('price_evening') }}" min="0" step="0.01" required
                         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                         placeholder="0.00">
                 </div>
@@ -122,40 +122,6 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const priceMorning = document.getElementById('price_morning');
-    const priceAfternoon = document.getElementById('price_afternoon');
-    const priceEvening = document.getElementById('price_evening');
-    const pricePerDay = document.getElementById('price_per_day');
-
-    // When time slots change → update total
-    function calculateTotalPrice() {
-        const morning = parseFloat(priceMorning.value) || 0;
-        const afternoon = parseFloat(priceAfternoon.value) || 0;
-        const evening = parseFloat(priceEvening.value) || 0;
-        pricePerDay.value = (morning + afternoon + evening).toFixed(2);
-    }
-
-    // When price per day is typed → divide equally into 3 slots
-    function distributeToSlots() {
-        const total = parseFloat(pricePerDay.value) || 0;
-        if (total > 0) {
-            const perSlot = (total / 3).toFixed(2);
-            priceMorning.value = perSlot;
-            priceAfternoon.value = perSlot;
-            priceEvening.value = perSlot;
-        }
-    }
-
-    pricePerDay.addEventListener('input', distributeToSlots);
-    priceMorning.addEventListener('input', calculateTotalPrice);
-    priceAfternoon.addEventListener('input', calculateTotalPrice);
-    priceEvening.addEventListener('input', calculateTotalPrice);
-
-    // Calculate on page load
-    calculateTotalPrice();
-});
-
 function previewVenueImages(event) {
     const files = event.target.files;
     const previewContainer = document.getElementById('previewContainer');

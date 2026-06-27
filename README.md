@@ -80,12 +80,10 @@ A professional, full-featured venue and suite booking management system built wi
 
 ## 📚 Documentation
 
-Comprehensive documentation is available in the following files:
-
-- **[SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)** - Detailed installation and configuration guide
-- **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - Complete project architecture and features
-- **[SYSTEM_FLOW.md](SYSTEM_FLOW.md)** - User workflows and system processes
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference for common tasks
+| Document | Audience | Description |
+|----------|----------|-------------|
+| **[USER_GUIDE.md](USER_GUIDE.md)** | Clients, staff, admins | End-user guide — booking flows, payments, and daily workflows |
+| **[README.md](README.md)** | Developers | Installation, tech stack, and project overview |
 
 ---
 

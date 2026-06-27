@@ -231,15 +231,8 @@ class BookingController extends Controller
                 $venueAmount += $pricePerSlot * $days;
             }
         } else {
-            // Full day booking - add all time slot prices if available
-            if ($venue->price_morning && $venue->price_afternoon && $venue->price_evening) {
-                // If venue has time-based pricing, full day = sum of all slots
-                $fullDayPrice = $venue->price_morning + $venue->price_afternoon + $venue->price_evening;
-            } else {
-                // Otherwise use standard price per day
-                $fullDayPrice = $venue->price_per_day;
-            }
-            $venueAmount = $fullDayPrice * $days;
+            // Full day booking uses the dedicated full day price
+            $venueAmount = $venue->price_per_day * $days;
         }
 
         // Calculate add-ons amount
@@ -445,10 +438,7 @@ class BookingController extends Controller
             $validated['package_id'] = null;
         } else {
             $validated['package_id'] = null;
-            $fullDayPrice = ($venue->price_morning && $venue->price_afternoon && $venue->price_evening)
-                ? $venue->price_morning + $venue->price_afternoon + $venue->price_evening
-                : $venue->price_per_day;
-            $venueAmount = $fullDayPrice * $days;
+            $venueAmount = $venue->price_per_day * $days;
         }
 
         $validated['total_amount'] = $venueAmount;

@@ -122,6 +122,7 @@ class ReportController extends Controller
                 'Balance',
                 'Payment Status',
                 'Payment Method(s)',
+                'Reference Number(s)',
                 'Booking Status',
                 'Handled By',
                 'Created At',
@@ -138,6 +139,12 @@ class ReportController extends Controller
                 $paymentMethods = $booking->payments
                     ->where('status', 'verified')
                     ->pluck('payment_method')
+                    ->filter()
+                    ->unique()
+                    ->implode(', ');
+
+                $referenceNumbers = $booking->payments
+                    ->pluck('reference_number')
                     ->filter()
                     ->unique()
                     ->implode(', ');
@@ -159,6 +166,7 @@ class ReportController extends Controller
                     number_format($balance, 2, '.', ''),
                     ucfirst($booking->payment_status),
                     $paymentMethods ?: 'N/A',
+                    $referenceNumbers ?: 'N/A',
                     ucfirst($booking->status),
                     $booking->staff->name ?? 'N/A',
                     $booking->created_at->format('Y-m-d H:i:s'),

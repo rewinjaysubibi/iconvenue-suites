@@ -137,6 +137,12 @@
                         <div>
                             <p class="font-semibold text-gray-800">₱{{ number_format($payment->amount, 2) }}</p>
                             <p class="text-sm text-gray-600">{{ $payment->payment_method ?? 'N/A' }}</p>
+                            @if($payment->reference_number)
+                            <p class="text-sm text-gray-700 mt-1">
+                                <span class="text-gray-500">Ref:</span>
+                                <span class="font-mono font-medium">{{ $payment->reference_number }}</span>
+                            </p>
+                            @endif
                             <p class="text-xs text-gray-500">Submitted: {{ $payment->created_at->format('M d, Y h:i A') }}</p>
                             @if($payment->verified_at)
                             <p class="text-xs text-gray-500">
@@ -162,7 +168,7 @@
                                     @csrf
                                     <button type="submit" 
                                             class="inline-flex items-center px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-semibold rounded-lg hover:shadow-lg transition-all duration-200"
-                                            onclick="return confirm('Verify this payment?')">
+                                            onclick="return confirm('Verify this payment{{ $payment->reference_number ? ' (Ref: ' . $payment->reference_number . ')' : '' }}?')">
                                         <i class="fas fa-check mr-1"></i>Verify
                                     </button>
                                 </form>

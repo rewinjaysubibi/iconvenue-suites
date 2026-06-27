@@ -12,6 +12,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference No.</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -32,6 +33,13 @@
                 </td>
                 <td class="px-6 py-4 text-gray-600 font-semibold">₱{{ number_format($payment->amount, 2) }}</td>
                 <td class="px-6 py-4 text-gray-600">{{ $payment->payment_method ?? 'N/A' }}</td>
+                <td class="px-6 py-4 text-gray-600">
+                    @if($payment->reference_number)
+                        <span class="font-mono text-sm">{{ $payment->reference_number }}</span>
+                    @else
+                        <span class="text-gray-400 text-sm">—</span>
+                    @endif
+                </td>
                 <td class="px-6 py-4">
                     <span class="px-3 py-1 rounded-full text-xs font-semibold
                         @if($payment->status == 'verified') bg-green-100 text-green-800
@@ -76,7 +84,7 @@
                             <button type="submit" 
                                     class="inline-flex items-center px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-semibold rounded-lg hover:shadow-lg transition-all duration-200" 
                                     title="Verify Payment"
-                                    onclick="return confirm('Verify this payment?')">
+                                    onclick="return confirm('Verify this payment{{ $payment->reference_number ? ' (Ref: ' . $payment->reference_number . ')' : '' }}?')">
                                 <i class="fas fa-check-circle mr-1"></i>Verify
                             </button>
                         </form>
@@ -107,7 +115,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="8" class="px-6 py-4 text-center text-gray-600">No payment records found</td>
+                <td colspan="9" class="px-6 py-4 text-center text-gray-600">No payment records found</td>
             </tr>
             @endforelse
         </tbody>

@@ -85,18 +85,27 @@ class VenueController extends Controller
 
     private function storeVenueOrSuite(Request $request, $type)
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'room_number' => 'nullable|string|max:50',
             'description' => 'required|string',
             'capacity' => 'required|integer|min:1',
             'price_per_day' => 'required|numeric|min:0',
-            'price_morning' => 'nullable|numeric|min:0',
-            'price_afternoon' => 'nullable|numeric|min:0',
-            'price_evening' => 'nullable|numeric|min:0',
             'amenities' => 'nullable|array',
-            'images.*' => 'nullable|image|max:10240' // Increased to 10MB for HD images
-        ]);
+            'images.*' => 'nullable|image|max:10240'
+        ];
+
+        if ($type === 'venue') {
+            $rules['price_morning'] = 'required|numeric|min:0';
+            $rules['price_afternoon'] = 'required|numeric|min:0';
+            $rules['price_evening'] = 'required|numeric|min:0';
+        } else {
+            $rules['price_morning'] = 'nullable|numeric|min:0';
+            $rules['price_afternoon'] = 'nullable|numeric|min:0';
+            $rules['price_evening'] = 'nullable|numeric|min:0';
+        }
+
+        $validated = $request->validate($rules);
 
         $images = [];
         if ($request->hasFile('images')) {
@@ -141,18 +150,27 @@ class VenueController extends Controller
 
     private function updateVenueOrSuite(Request $request, Venue $venue, $type)
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'room_number' => 'nullable|string|max:50',
             'description' => 'required|string',
             'capacity' => 'required|integer|min:1',
             'price_per_day' => 'required|numeric|min:0',
-            'price_morning' => 'nullable|numeric|min:0',
-            'price_afternoon' => 'nullable|numeric|min:0',
-            'price_evening' => 'nullable|numeric|min:0',
             'amenities' => 'nullable|array',
-            'images.*' => 'nullable|image|max:10240' // Increased to 10MB for HD images
-        ]);
+            'images.*' => 'nullable|image|max:10240'
+        ];
+
+        if ($request->input('type', $type) === 'venue') {
+            $rules['price_morning'] = 'required|numeric|min:0';
+            $rules['price_afternoon'] = 'required|numeric|min:0';
+            $rules['price_evening'] = 'required|numeric|min:0';
+        } else {
+            $rules['price_morning'] = 'nullable|numeric|min:0';
+            $rules['price_afternoon'] = 'nullable|numeric|min:0';
+            $rules['price_evening'] = 'nullable|numeric|min:0';
+        }
+
+        $validated = $request->validate($rules);
 
         $images = $venue->images ?? [];
         if ($request->hasFile('images')) {
